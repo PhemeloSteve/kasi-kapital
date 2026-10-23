@@ -9,7 +9,7 @@ export function createClient() {
     {
       cookies: {
         getAll: () => cookieStore.getAll(),
-        setAll: (items) => {
+        setAll: (items: { name: string; value: string; options?: Parameters<typeof cookieStore.set>[2] }[]) => {
           try {
             items.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
           } catch {
