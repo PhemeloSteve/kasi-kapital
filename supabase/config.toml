@@ -1,0 +1,15 @@
+# Minimal local Supabase config. Run `npx supabase init` to regenerate a full one.
+project_id = "kasi-kapital"
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/auth/callback"]
+enable_signup = true
+minimum_password_length = 10
+
+[auth.email]
+enable_confirmations = true
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
