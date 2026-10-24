@@ -1,0 +1,6 @@
+# Security-sensitive areas always need an owner review.
+*                          @PhemeloSteve
+/supabase/                 @PhemeloSteve
+/src/domain/               @PhemeloSteve
+/src/infrastructure/       @PhemeloSteve
+/.github/                  @PhemeloSteve

@@ -2,7 +2,7 @@
 
 > Community funding for South Africa's small businesses. Young founders build a verified track record; neighbours, donors and companies discover, back and follow them.
 
-Built for the **FNB 2026 Hackathon**, theme: *Youth entrepreneurship and small-business growth*.
+Built for the **FNB 2026 Hackathon**, theme: _Youth entrepreneurship and small-business growth_.
 
 ## The problem
 
@@ -19,12 +19,12 @@ Inspired by a community-funded local bakery, Kasi Kapital brings the stokvel spi
 
 ## Account types
 
-| Role | What they can do |
-| --- | --- |
+| Role       | What they can do                                                    |
+| ---------- | ------------------------------------------------------------------- |
 | `business` | Create and verify a business, set goals, upload proof, post updates |
-| `investor` | Browse, verify identity, contribute to goals |
-| `donor` | Corporate or individual donations, impact reporting |
-| `admin` | Review verification, handle reports, view the audit log |
+| `investor` | Browse, verify identity, contribute to goals                        |
+| `donor`    | Corporate or individual donations, impact reporting                 |
+| `admin`    | Review verification, handle reports, view the audit log             |
 
 ## Funding types (phased by legal risk)
 
@@ -34,17 +34,17 @@ Inspired by a community-funded local bakery, Kasi Kapital brings the stokvel spi
 
 ## Tech stack
 
-| Layer | Technology |
-| --- | --- |
-| Frontend | Next.js 14 (App Router), React, TypeScript, PWA |
-| UI | Tailwind CSS |
-| Maps | Leaflet + OpenStreetMap |
-| Backend | Supabase (PostgreSQL, Auth, Storage, Row Level Security) |
-| Geo search | PostGIS |
-| Validation | Zod |
-| Testing | Vitest |
-| CI | GitHub Actions |
-| Hosting | Vercel or a South African cloud region (AWS af-south-1 / Azure South Africa North) |
+| Layer      | Technology                                                                         |
+| ---------- | ---------------------------------------------------------------------------------- |
+| Frontend   | Next.js 15 (App Router), React, TypeScript, PWA                                    |
+| UI         | Tailwind CSS                                                                       |
+| Maps       | Leaflet + OpenStreetMap                                                            |
+| Backend    | Supabase (PostgreSQL, Auth, Storage, Row Level Security)                           |
+| Geo search | PostGIS                                                                            |
+| Validation | Zod 4                                                                              |
+| Testing    | Vitest                                                                             |
+| CI         | GitHub Actions                                                                     |
+| Hosting    | Vercel or a South African cloud region (AWS af-south-1 / Azure South Africa North) |
 
 External providers for identity verification, open banking and payments are **sandbox or mock implementations** behind swappable interfaces in `src/lib/providers/`. Nothing in this repository moves real money.
 
@@ -52,7 +52,7 @@ External providers for identity verification, open banking and payments are **sa
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 22.12+
 - A Supabase project (or the Supabase CLI for local development)
 
 ### Setup
@@ -124,21 +124,33 @@ This is a design summary, **not legal advice**. Before going live, get a corpora
 - Platforms that arrange equity, lending or pool funds may fall under FAIS, the Financial Markets Act, the National Credit Act or the Banks Act. The platform should never hold investor money directly; use a licensed payment provider or an attorney's trust account.
 - FICA and KYC obligations for verifying users.
 
-## Project structure
+## Architecture and engineering practices
+
+The code follows a layered architecture (domain, application, infrastructure, presentation) with ports and adapters, and the dependency direction is enforced by ESLint. See [ARCHITECTURE.md](ARCHITECTURE.md) and the decision records in `docs/adr/`.
 
 ```
 kasi-kapital/
   src/
-    app/                 # Next.js routes
-    components/
-    lib/
-      supabase/          # browser and server clients
-      providers/         # kyc, banking, payments (mock/sandbox)
-  supabase/
-    migrations/          # SQL schema + RLS
-  public/                # PWA manifest and icons
-  .github/workflows/     # CI
+    domain/              # pure business rules (no framework imports)
+    application/         # use cases + ports (interfaces)
+    infrastructure/      # Supabase, KYC, banking, payment adapters
+    config/              # Zod-validated environment
+    app/, components/    # Next.js UI (thin)
+  supabase/migrations/   # SQL schema + RLS
+  docs/adr/              # architecture decision records
+  .github/               # CI, CodeQL, Dependabot, CODEOWNERS, PR template
 ```
+
+| Practice                    | How it is applied                                                                                  |
+| --------------------------- | -------------------------------------------------------------------------------------------------- |
+| DRY / KISS / YAGNI          | One rule per concern in `domain`; equity contributions rejected until a licensed partner exists    |
+| Version control and reviews | Git, small PRs, PR template, CODEOWNERS, Conventional Commits ([CONTRIBUTING.md](CONTRIBUTING.md)) |
+| Naming and style            | ESLint, Prettier, EditorConfig, strict TypeScript                                                  |
+| Automated testing           | Vitest unit and use-case tests with a 90% coverage gate; integration and e2e tests planned         |
+| CI/CD                       | GitHub Actions: lint, typecheck, format, test, build                                               |
+| Supply chain security       | `npm audit`, CycloneDX SBOM artifact, Dependabot, gitleaks secret scan, CodeQL                     |
+
+Run everything locally with `npm run check`. Report vulnerabilities as described in [SECURITY.md](SECURITY.md).
 
 ## Roadmap
 

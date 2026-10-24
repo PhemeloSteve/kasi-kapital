@@ -1,4 +1,4 @@
-import type { KycProvider, OpenBankingProvider, PaymentProvider } from "./types";
+import type { KycProvider, OpenBankingProvider, PaymentGateway } from "@/application/ports";
 
 // MOCK implementations. No real identity checks or money movement happen here.
 export const mockKyc: KycProvider = {
@@ -13,9 +13,12 @@ export const mockOpenBanking: OpenBankingProvider = {
   },
 };
 
-export const mockPayments: PaymentProvider = {
+export const mockPayments: PaymentGateway = {
   async createCheckout({ contributionId }) {
-    return { checkoutUrl: `/mock-checkout/${contributionId}`, reference: `mock-pay-${contributionId}` };
+    return {
+      checkoutUrl: `/mock-checkout/${contributionId}`,
+      reference: `mock-pay-${contributionId}`,
+    };
   },
   async releaseMilestone() {
     return { released: true };

@@ -1,1 +1,56 @@
-{ "extends": ["next/core-web-vitals", "next/typescript"] }
+{
+  "extends": ["next/core-web-vitals"],
+  "rules": {
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "eqeqeq": "error"
+  },
+  "overrides": [
+    {
+      "files": ["src/domain/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["next", "next/*", "react", "react/*", "react-dom", "@supabase/*", "zod"],
+                "message": "domain must be pure TypeScript with no framework or library imports."
+              },
+              {
+                "group": [
+                  "@/application/*",
+                  "@/infrastructure/*",
+                  "@/app/*",
+                  "@/components/*",
+                  "@/config/*"
+                ],
+                "message": "domain cannot depend on outer layers."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/application/**/*.ts"],
+      "excludedFiles": ["src/application/**/*.test.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["next", "next/*", "react", "react/*", "react-dom", "@supabase/*"],
+                "message": "application layer must not import frameworks or database clients."
+              },
+              {
+                "group": ["@/infrastructure/*", "@/app/*", "@/components/*"],
+                "message": "application depends on ports, never on infrastructure."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
