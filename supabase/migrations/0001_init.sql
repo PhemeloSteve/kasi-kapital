@@ -1,8 +1,8 @@
 -- Kasi Kapital: initial schema with Row Level Security.
 -- Review every policy before production. Money amounts are stored in ZAR cents.
 
-create extension if not exists postgis;
-create extension if not exists pgcrypto;
+create extension if not exists postgis with schema extensions;
+create extension if not exists pgcrypto with schema extensions;
 
 -- ---------- Enums ----------
 create type user_role as enum ('business', 'investor', 'donor', 'admin');
@@ -11,17 +11,6 @@ create type contribution_kind as enum ('donation', 'presale', 'equity', 'revenue
 create type contribution_status as enum ('pending', 'held', 'released', 'refunded', 'failed');
 create type milestone_status as enum ('pending', 'proof_submitted', 'approved', 'rejected');
 create type document_type as enum ('id', 'cipc', 'bank_statement', 'tax_return', 'invoice', 'other');
-
--- ---------- Helpers ----------
-create or replace function public.is_admin()
-returns boolean
-language sql
-security definer
-set search_path = public
-stable
-as $$
-  select exists (select 1 from public.profiles where id = auth.uid() and role = 'admin');
-$$;
 
 -- ---------- Profiles ----------
 create table public.profiles (
@@ -32,6 +21,17 @@ create table public.profiles (
   popia_consent_at timestamptz,
   created_at timestamptz not null default now()
 );
+
+-- Helper (defined after profiles, because the function body reads that table).
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (select 1 from public.profiles where id = auth.uid() and role = 'admin');
+$$;
 
 -- Create a profile on signup. Admin can never be self-assigned.
 create or replace function public.handle_new_user()
@@ -85,7 +85,7 @@ create table public.businesses (
   category text not null,                       -- tuck shop, chicken farm, bakery, ...
   description text,
   suburb text,                                  -- public location precision: suburb/ward only
-  location geography(point, 4326),              -- approximate, never a home address
+  location extensions.geography(point, 4326),              -- approximate, never a home address
   cipc_number text,
   verification verification_status not null default 'unverified',
   trust_tier smallint not null default 0 check (trust_tier between 0 and 3),
