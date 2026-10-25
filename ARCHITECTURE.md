@@ -38,11 +38,20 @@ Dependencies only point inwards. This is enforced by ESLint (`no-restricted-impo
 5. Privacy by design (POPIA): collect the minimum, show approximate locations only, keep retention rules.
 6. Supply chain: lockfile committed, dependencies audited in CI, SBOM generated on every build, Dependabot keeps packages current, secrets scanned with gitleaks, CodeQL for static analysis.
 
+## Authentication flow
+
+- **Sign-up** (`signUp` use case): validates input with Zod, requires explicit POPIA consent, and offers only the `business`, `investor` and `donor` roles. The Supabase adapter passes the chosen role and a consent flag as metadata; the database trigger `handle_new_user` is the real authority: it never accepts `admin`, trims the name, and timestamps consent itself.
+- **Login** (`logIn` use case): one generic "incorrect email or password" message so attackers cannot discover which emails exist; users without recorded consent are sent to `/consent` first.
+- **Sessions:** `middleware.ts` refreshes the session cookie and redirects signed-out visitors away from protected pages. Pages then re-check role and consent on the server with `requireUser()`, using `auth.getUser()` (validated with Supabase), never an unverified cookie.
+- **Redirects:** every `?next=` value passes through `safeRedirectPath`, which allows only same-site paths (open-redirect protection).
+- **First admin:** created by an out-of-band SQL update, never through the app.
+- **Known gaps (planned in the hardening step):** MFA enrolment for admins, app-level rate limiting (Supabase's built-in auth limits apply meanwhile), and confirm-email switched back on for production.
+
 ## Testing strategy
 
 - **Unit tests (domain):** fast, no mocks needed. Target 90%+ coverage (enforced in `vitest.config.ts`).
 - **Use-case tests (application):** in-memory fakes for the ports; assert that rejected requests never reach the store.
-- **Integration tests (planned):** database policies against a local Supabase instance, to prove RLS blocks what it should.
+- **Database policy tests (built, run manually):** `supabase/tests/rls_smoke_test.sql` has assertions run as a non-superuser against a throwaway Postgres: no self-assigned admin, no self-changed role or KYC status, investors cannot read documents, clients cannot insert contributions, anonymous users see only verified businesses. Running them in CI is planned.
 - **End-to-end (planned):** one happy path (register, verify, fund, release) with Playwright.
 
 ## Adding a feature

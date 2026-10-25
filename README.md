@@ -85,6 +85,18 @@ npm test
 npm run build
 ```
 
+## Supabase dashboard setup (one-off)
+
+1. **Authentication → Sign In / Providers → Email:** while developing, switch **Confirm email** off so test accounts can log in immediately. **Switch it back on before real users sign up.**
+2. **Authentication → URL Configuration:** set **Site URL** to `http://localhost:3000` and add `http://localhost:3000/auth/callback` under **Redirect URLs** (add your deployed URL too when you deploy).
+3. **Storage:** create the private buckets `business-documents` and `identity-documents`.
+4. **First admin:** admins can never be created through sign-up. Sign up normally, then in the **SQL Editor** run:
+
+```sql
+update public.profiles set role = 'admin'
+where id = (select id from auth.users where email = 'you@example.com');
+```
+
 ## Environment variables
 
 See `.env.example`. Never commit `.env.local`. The `SUPABASE_SERVICE_ROLE_KEY` must only be used in server code and must never be exposed to the browser.
@@ -154,7 +166,8 @@ Run everything locally with `npm run check`. Report vulnerabilities as described
 
 ## Roadmap
 
-- [ ] Auth, roles and business profiles
+- [x] Auth, roles and consent (sign-up, login, per-role landing pages, POPIA consent)
+- [ ] Business profiles
 - [ ] Document upload and admin verification queue
 - [ ] Discovery: map and category filters
 - [ ] Funding goals, milestones and escrow-style release

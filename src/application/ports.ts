@@ -1,4 +1,6 @@
 // Ports: what the application needs from the outside world. Infrastructure implements them.
+import type { Result } from "@/domain/result";
+import type { SignupRole, UserRole } from "@/domain/roles";
 import type { VerificationStatus } from "@/domain/types";
 
 export type KycResult = { status: "verified" | "pending" | "rejected"; reference: string };
@@ -38,4 +40,29 @@ export interface ContributionStore {
     amountCents: number;
     kind: "donation" | "presale";
   }): Promise<{ id: string }>;
+}
+
+export type CurrentUser = {
+  userId: string;
+  role: UserRole;
+  fullName: string | null;
+  consented: boolean;
+};
+
+export interface AuthGateway {
+  signUp(input: {
+    email: string;
+    password: string;
+    fullName: string;
+    role: SignupRole;
+  }): Promise<
+    Result<{ hasSession: boolean }, "failed" | "rate_limited" | "weak_password" | "invalid_email">
+  >;
+  signIn(input: {
+    email: string;
+    password: string;
+  }): Promise<Result<CurrentUser, "invalid_credentials" | "unavailable">>;
+  signOut(): Promise<void>;
+  getCurrentUser(): Promise<CurrentUser | null>;
+  acceptConsent(userId: string): Promise<Result<true, "failed">>;
 }
