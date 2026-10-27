@@ -75,6 +75,14 @@ npx supabase db push
 
 Create two **private** storage buckets: `business-documents` and `identity-documents`.
 
+### Database tests (optional, needs a local PostgreSQL with PostGIS)
+
+```bash
+PGHOST=localhost PGUSER=postgres ./supabase/tests/run_tests.sh
+```
+
+Each test file runs on its own throwaway database. Your Supabase project is never touched.
+
 ### Run
 
 ```bash
@@ -96,6 +104,10 @@ npm run build
 update public.profiles set role = 'admin'
 where id = (select id from auth.users where email = 'you@example.com');
 ```
+
+## Payments in this build
+
+Payments are **simulated**. Supporters pay through a demo checkout and no real money moves. To make the demo checkout work, add your project's service-role key to `.env.local` as `SUPABASE_SERVICE_ROLE_KEY` (Supabase dashboard, Project Settings, API). It is a powerful secret: keep it on the server only and never commit it. `PAYMENT_PROVIDER=mock` selects the demo provider. Setting `ALLOW_DEMO_KYC=true` lets supporters verify themselves with one click for demos; leave it `false` in production.
 
 ## Environment variables
 
@@ -167,11 +179,12 @@ Run everything locally with `npm run check`. Report vulnerabilities as described
 ## Roadmap
 
 - [x] Auth, roles and consent (sign-up, login, per-role landing pages, POPIA consent)
-- [ ] Business profiles
-- [ ] Document upload and admin verification queue
-- [ ] Discovery: map and category filters
-- [ ] Funding goals, milestones and escrow-style release
-- [ ] Investor and donor views
+- [x] Business profiles (category, suburb, approximate location, social links)
+- [x] Document upload, admin verification queue and trust levels
+- [x] Discovery: search, category filter, "near me" with a map, and a business detail page
+- [x] Funding goals with milestones (created, protected and locked once funded)
+- [x] Contributions, demo checkout, milestone proof, admin approval and payouts (simulated payment provider)
+- [x] Investor and donor views (discovery, business pages, my contributions)
 - [ ] Supply circles: bulk buying and stock swaps
 - [ ] YouTube, Facebook and LinkedIn link-outs
 - [ ] Live KYC, open-banking and payment providers

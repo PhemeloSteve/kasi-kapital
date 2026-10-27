@@ -2,7 +2,18 @@ import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/infrastructure/supabase/middleware";
 
 // Pages that need a signed-in user. Role checks happen again server-side in each page.
-const protectedPrefixes = ["/business", "/investor", "/donor", "/admin", "/consent"];
+const protectedPrefixes = [
+  "/business",
+  "/investor",
+  "/donor",
+  "/admin",
+  "/consent",
+  "/documents",
+  "/businesses",
+  "/contributions",
+  "/mock-checkout",
+  "/verify-identity",
+];
 
 export async function middleware(request: NextRequest) {
   const { response, isAuthenticated } = await updateSession(request);

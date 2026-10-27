@@ -1,16 +1,21 @@
-import { DashboardShell } from "@/components/DashboardShell";
+import { DiscoveryScreen } from "@/components/DiscoveryScreen";
 import { requireUser } from "@/app/_lib/guard";
 
 export const metadata = { title: "Discover businesses | Kasi Kapital" };
 
-export default async function Page() {
-  const user = await requireUser(["investor" as const]);
+export default async function InvestorPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const user = await requireUser(["investor"]);
   return (
-    <DashboardShell title="Discover businesses" roleLabel="Investor account" name={user.fullName}>
-      <p className="text-slate-700">
-        Verified local businesses near you will appear here. Complete identity verification to start
-        backing them.
-      </p>
-    </DashboardShell>
+    <DiscoveryScreen
+      title="Discover businesses"
+      roleLabel="Investor account"
+      name={user.fullName}
+      intro="Every business here has had its identity and trading checked by our team. Search, filter, or look near you."
+      params={await searchParams}
+    />
   );
 }

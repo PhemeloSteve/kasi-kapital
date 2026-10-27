@@ -3,6 +3,7 @@
 --   1. createdb kk_test && psql kk_test -f supabase/tests/stub_supabase.sql   (fake auth schema)
 --   2. apply every file in supabase/migrations/ in order, each with: psql kk_test -1 -f <file>
 --   3. psql kk_test -f supabase/tests/rls_smoke_test.sql   (look for PASS lines, no FAIL/ERROR)
+-- Easiest: run supabase/tests/run_tests.sh, which does all of this on a fresh database each time.
 -- Needs PostgreSQL with PostGIS. Tests run as a non-superuser role so RLS really applies.
 \set ON_ERROR_STOP on
 do $$ begin
@@ -41,11 +42,13 @@ end $$;
 
 -- make a real admin out-of-band (as the project owner would), plus two businesses
 update public.profiles set role='admin' where id='c0000000-0000-4000-8000-000000000003';
+insert into auth.users (id, raw_user_meta_data) values
+ ('a0000000-0000-4000-8000-000000000009', '{"role":"business","full_name":"Second Founder","popia_consent":true}');
 insert into public.businesses (id, owner_id, name, category, verification) values
  ('d0000000-0000-4000-8000-0000000000d1','a0000000-0000-4000-8000-000000000001','Verified Bakery','bakery','verified'),
- ('d0000000-0000-4000-8000-0000000000d2','a0000000-0000-4000-8000-000000000001','Pending Tuck Shop','tuck shop','pending');
+ ('d0000000-0000-4000-8000-0000000000d2','a0000000-0000-4000-8000-000000000009','Pending Tuck Shop','tuck_shop','pending');
 insert into public.documents (business_id, type, storage_path) values
- ('d0000000-0000-4000-8000-0000000000d1','bank_statement','x/y.pdf');
+ ('d0000000-0000-4000-8000-0000000000d1','bank_statement','d0000000-0000-4000-8000-0000000000d1/y.pdf');
 insert into public.funding_goals (id, business_id, title, target_cents) values
  ('e0000000-0000-4000-8000-0000000000e1','d0000000-0000-4000-8000-0000000000d1','New oven',500000);
 
@@ -97,10 +100,10 @@ end $$;
 select set_config('request.jwt.claim.sub','a0000000-0000-4000-8000-000000000001', false);
 do $$ declare n int; begin
   select count(*) into n from public.businesses;
-  assert n = 2, 'FAIL 8: owner should see both own businesses';
+  assert n = 1, 'FAIL 8: founder 1 should see only the verified business (their own)';
   select count(*) into n from public.documents;
   assert n = 1, 'FAIL 9: owner should see own documents';
-  raise notice 'PASS 8-9: founder sees own businesses and documents';
+  raise notice 'PASS 8-9: founder sees own business and documents';
 end $$;
 
 -- ===== act as the ADMIN =====

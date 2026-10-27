@@ -26,6 +26,14 @@ export default function PrivacyPage() {
         administrators. Business locations are shown only as an approximate area, never a home
         address.
       </p>
+      <h2 className="text-lg font-semibold">Documents and how long we keep them</h2>
+      <p className="text-sm">
+        ID documents and bank statements are opened only by you and our verification team, and every
+        time a team member opens one it is recorded. You can delete documents that have not been
+        approved. Approved documents are kept while your business is active so decisions can be
+        checked, and are deleted when you close your account, unless the law requires us to keep
+        them.
+      </p>
       <h2 className="text-lg font-semibold">Your rights</h2>
       <p className="text-sm">
         Under POPIA you may ask to see, correct or delete your information, or complain to the

@@ -1,15 +1,21 @@
-import { DashboardShell } from "@/components/DashboardShell";
+import { DiscoveryScreen } from "@/components/DiscoveryScreen";
 import { requireUser } from "@/app/_lib/guard";
 
-export const metadata = { title: "Your giving | Kasi Kapital" };
+export const metadata = { title: "Support a business | Kasi Kapital" };
 
-export default async function Page() {
-  const user = await requireUser(["donor" as const]);
+export default async function DonorPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const user = await requireUser(["donor"]);
   return (
-    <DashboardShell title="Your giving" roleLabel="Donor account" name={user.fullName}>
-      <p className="text-slate-700">
-        Browse verified businesses and see the impact of your donations here.
-      </p>
-    </DashboardShell>
+    <DiscoveryScreen
+      title="Support a local business"
+      roleLabel="Donor account"
+      name={user.fullName}
+      intro="Find a verified local business whose goal matters to you. Donations ask for nothing in return."
+      params={await searchParams}
+    />
   );
 }

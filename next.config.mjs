@@ -7,7 +7,8 @@ const csp = [
   "script-src 'self' 'unsafe-inline'" +
     (process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""),
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://*.tile.openstreetmap.org " + supabaseUrl,
+  "img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org " +
+    supabaseUrl,
   "font-src 'self'",
   `connect-src 'self' ${supabaseUrl} ${supabaseUrl.replace("https://", "wss://")}`,
   "frame-src https://www.youtube-nocookie.com",
@@ -22,6 +23,8 @@ const csp = [
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Document uploads go through server actions. Files are capped at 4 MB in the app itself.
+  experimental: { serverActions: { bodySizeLimit: "5mb" } },
   async headers() {
     return [
       {

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { err, ok, type Result } from "@/domain/result";
 import { landingPathForRole, signupRoles } from "@/domain/roles";
+import { toFieldErrors } from "./form-errors";
 import type { AuthGateway } from "./ports";
 
 const email = z.string().trim().toLowerCase().pipe(z.email());
@@ -31,17 +32,6 @@ const fieldMessages: Record<keyof FieldErrors, string> = {
   consent: "You must accept the privacy notice to create an account.",
 };
 
-function toFieldErrors(issues: z.core.$ZodIssue[]): FieldErrors {
-  const errors: FieldErrors = {};
-  for (const issue of issues) {
-    const key = issue.path[0];
-    if (typeof key === "string" && key in fieldMessages) {
-      errors[key as keyof FieldErrors] = fieldMessages[key as keyof FieldErrors];
-    }
-  }
-  return errors;
-}
-
 export type SignUpError =
   | { code: "invalid_input"; fields: FieldErrors }
   | { code: "signup_failed" }
@@ -56,7 +46,10 @@ export async function signUp(
 ): Promise<Result<SignUpOutcome, SignUpError>> {
   const parsed = signUpInput.safeParse(rawInput);
   if (!parsed.success)
-    return err({ code: "invalid_input", fields: toFieldErrors(parsed.error.issues) });
+    return err({
+      code: "invalid_input",
+      fields: toFieldErrors(parsed.error.issues, fieldMessages),
+    });
   const { fullName, email, password, role } = parsed.data;
 
   const created = await deps.auth.signUp({ email, password, fullName, role });
