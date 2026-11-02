@@ -9,13 +9,5 @@ export default async function DonorPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await requireUser(["donor"]);
-  return (
-    <DiscoveryScreen
-      title="Support a local business"
-      roleLabel="Donor account"
-      name={user.fullName}
-      intro="Find a verified local business whose goal matters to you. Donations ask for nothing in return."
-      params={await searchParams}
-    />
-  );
+  return <DiscoveryScreen role="donor" name={user.fullName} params={await searchParams} />;
 }

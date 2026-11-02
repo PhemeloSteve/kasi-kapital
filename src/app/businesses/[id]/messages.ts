@@ -28,6 +28,12 @@ export function describeStartError(error: StartError): {
             : "You have reached the R1 000 limit that applies until your identity is verified.",
         needsVerification: true,
       };
+    case "too_many_pending":
+      return {
+        message:
+          "You have several checkouts waiting for payment. Finish them, or wait 15 minutes for them to expire, then try again.",
+        needsVerification: false,
+      };
     case "goal_closed":
       return { message: "This goal is closed.", needsVerification: false };
     case "goal_not_found":

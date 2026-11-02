@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
-const inputClass =
-  "mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-base focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30";
+const inputClass = "mt-1 input";
 
 type BaseProps = {
   id: string;
@@ -21,13 +20,13 @@ function Frame({
 }: BaseProps & { children: ReactNode }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-slate-800">
+      <label htmlFor={id} className="block text-sm font-medium text-gray-700">
         {label}
-        {!required && <span className="font-normal text-slate-500"> (optional)</span>}
+        {!required && <span className="font-normal text-gray-500"> (optional)</span>}
       </label>
       {children}
       {hint && (
-        <p id={`${id}-hint`} className="mt-1 text-xs text-slate-500">
+        <p id={`${id}-hint`} className="mt-1 text-xs text-gray-500">
           {hint}
         </p>
       )}

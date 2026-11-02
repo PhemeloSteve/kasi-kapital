@@ -3,6 +3,8 @@ import { isUserRole } from "@/domain/roles";
 import type { AuthGateway, CurrentUser } from "@/application/ports";
 import { parsePublicEnv } from "@/config/env";
 import { classifySignUpError } from "./auth-errors";
+import { cookies } from "next/headers";
+import { KEEP_COOKIE } from "./cookie-policy";
 import { createClient } from "./server";
 
 type ServerClient = Awaited<ReturnType<typeof createClient>>;
@@ -52,8 +54,8 @@ export function createAuthGateway(): AuthGateway {
       return ok({ hasSession: data.session !== null });
     },
 
-    async signIn({ email, password }) {
-      const supabase = await createClient();
+    async signIn({ email, password, keepSignedIn }) {
+      const supabase = await createClient({ persist: keepSignedIn });
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error || !data.user) {
         if (error)
@@ -67,12 +69,22 @@ export function createAuthGateway(): AuthGateway {
       }
       const user = await loadCurrentUser(supabase, data.user.id);
       if (!user) return err("unavailable");
+
+      // Remember the choice for later requests, so refreshed sign-in cookies follow the same rule.
+      (await cookies()).set(KEEP_COOKIE, keepSignedIn ? "1" : "0", {
+        path: "/",
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: keepSignedIn ? 60 * 60 * 24 * 400 : undefined,
+      });
       return ok(user);
     },
 
     async signOut() {
       const supabase = await createClient();
       await supabase.auth.signOut();
+      (await cookies()).delete(KEEP_COOKIE);
     },
 
     async getCurrentUser() {

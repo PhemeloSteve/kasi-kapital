@@ -22,3 +22,24 @@ export function milestoneLabel(input: {
       return "Not started";
   }
 }
+
+export type MilestoneTone = "success" | "waiting" | "action" | "attention" | "locked";
+
+/** How a milestone row should look: done, in someone else's hands, needs the founder, needs fixing, or not open yet. */
+export function milestoneTone(input: {
+  status: MilestoneStatus;
+  funded: "unfunded" | "partial" | "funded" | null;
+  payout: "pending" | "paid" | "failed" | null;
+}): MilestoneTone {
+  if (input.payout === "paid") return "success";
+  if (input.payout === "pending" || input.payout === "failed") return "waiting";
+  switch (input.status) {
+    case "approved":
+    case "proof_submitted":
+      return "waiting";
+    case "rejected":
+      return "attention";
+    case "pending":
+      return input.funded === "funded" ? "action" : "locked";
+  }
+}

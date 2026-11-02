@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { parsePublicEnv } from "@/config/env";
+import { KEEP_COOKIE, sessionCookieOptions } from "./cookie-policy";
 
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 
@@ -11,6 +12,7 @@ export async function updateSession(request: NextRequest) {
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   });
+  const persist = request.cookies.get(KEEP_COOKIE)?.value === "1";
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -22,7 +24,9 @@ export async function updateSession(request: NextRequest) {
         setAll: (items: CookieToSet[]) => {
           items.forEach(({ name, value }) => request.cookies.set(name, value));
           response = NextResponse.next({ request });
-          items.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+          items.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, sessionCookieOptions(value, options, persist)),
+          );
         },
       },
     },

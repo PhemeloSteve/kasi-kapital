@@ -18,6 +18,7 @@ export const signUpInput = z.object({
 export const logInInput = z.object({
   email,
   password: z.string().min(1).max(72),
+  keep: z.boolean().default(false),
 });
 
 export type FieldErrors = Partial<
@@ -81,7 +82,8 @@ export async function logIn(
   const parsed = logInInput.safeParse(rawInput);
   if (!parsed.success) return err("invalid_input");
 
-  const signedIn = await deps.auth.signIn(parsed.data);
+  const { email, password, keep } = parsed.data;
+  const signedIn = await deps.auth.signIn({ email, password, keepSignedIn: keep });
   if (!signedIn.ok) return err(signedIn.error);
 
   const user = signedIn.value;

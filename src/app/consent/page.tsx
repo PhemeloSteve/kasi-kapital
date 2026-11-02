@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { acceptConsentAction, logOutAction } from "@/app/(auth)/actions";
+import { AuthLayout } from "@/components/auth/AuthLayout";
+import { authLinkClass, authPrimaryClass, authSecondaryClass } from "@/components/auth/AuthButton";
 import { landingPathForRole } from "@/domain/roles";
 import { createAuthGateway } from "@/infrastructure/supabase/auth-gateway";
 
@@ -12,32 +14,26 @@ export default async function ConsentPage() {
   if (user.consented) redirect(landingPathForRole(user.role));
 
   return (
-    <main className="mx-auto max-w-md p-6">
-      <h1 className="text-2xl font-bold text-brand">One more step</h1>
-      <p className="mt-2 text-sm text-slate-700">
+    <AuthLayout>
+      <h1 className="text-3xl font-medium tracking-tight">One more step</h1>
+      <p className="mt-3 text-sm text-brand-cream/90 lg:text-gray-700">
         Before you continue, please read our{" "}
-        <Link href="/privacy" target="_blank" className="text-brand underline">
+        <Link href="/privacy" target="_blank" className={authLinkClass}>
           privacy notice
         </Link>
         . Kasi Kapital handles personal information, including identity and business documents,
         under POPIA.
       </p>
-      <form action={acceptConsentAction} className="mt-6">
-        <button
-          type="submit"
-          className="w-full rounded-md bg-brand px-4 py-2.5 font-medium text-white hover:bg-brand-dark"
-        >
+      <form action={acceptConsentAction} className="mt-8">
+        <button type="submit" className={authPrimaryClass}>
           I have read it and I agree
         </button>
       </form>
       <form action={logOutAction} className="mt-3">
-        <button
-          type="submit"
-          className="w-full rounded-md border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50"
-        >
+        <button type="submit" className={authSecondaryClass}>
           Log out instead
         </button>
       </form>
-    </main>
+    </AuthLayout>
   );
 }

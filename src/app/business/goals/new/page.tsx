@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { DashboardShell } from "@/components/DashboardShell";
 import { GoalForm } from "@/components/GoalForm";
 import { requireUser } from "@/app/_lib/guard";
 import { createBusinessStore } from "@/infrastructure/supabase/business-store";
@@ -11,13 +12,16 @@ export default async function NewGoalPage() {
   if (!business) redirect("/business/profile");
 
   return (
-    <main className="mx-auto max-w-xl p-6">
-      <h1 className="text-2xl font-bold text-brand">New funding goal</h1>
-      <p className="mb-6 mt-1 text-sm text-slate-600">
-        Say what you need and break it into steps. Supporters see exactly how their money will be
-        used.
-      </p>
-      <GoalForm />
-    </main>
+    <DashboardShell
+      role="business"
+      name={user.fullName}
+      title="New funding goal"
+      subtitle="Say what you need and break it into steps. Supporters see exactly how their money will be used."
+      narrow
+    >
+      <div className="card p-6 sm:p-8">
+        <GoalForm />
+      </div>
+    </DashboardShell>
   );
 }

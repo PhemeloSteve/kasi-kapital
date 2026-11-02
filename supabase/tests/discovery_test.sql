@@ -87,6 +87,26 @@ do $$ declare r record; prev double precision := -1; n int := 0; begin
   raise notice 'PASS Q7: open goals are counted (closed ones are not) and the location is the approximate one';
 end $$;
 
+-- ===== The featured goal on each card =====
+reset role;
+insert into public.contributions (goal_id, contributor_id, amount_cents, kind, status)
+select g.id, '33333333-0000-4000-8000-0000000000c1', v.amount, 'donation', v.status::contribution_status
+  from public.funding_goals g,
+       (values (100000, 'held'), (50000, 'pending'), (20000, 'failed')) as v(amount, status)
+ where g.title = 'Bigger oven';
+set role authenticated;
+select set_config('request.jwt.claim.sub', '33333333-0000-4000-8000-0000000000c1', false) \gset
+do $$ declare r record; begin
+  select * into r from public.discover_businesses(p_query => 'Soweto Bakery');
+  assert r.goal_title = 'Bigger oven' and r.goal_target_cents = 500000, format('FAIL F1: featured goal %s / %s (the closed goal must not be chosen)', r.goal_title, r.goal_target_cents);
+  assert r.goal_raised_cents = 100000, format('FAIL F2: raised %s (only held money counts, not pending or failed)', r.goal_raised_cents);
+  select * into r from public.discover_businesses(p_query => 'No Location Veggies');
+  assert r.goal_id is null and r.goal_title is null and r.goal_raised_cents is null, 'FAIL F3: a business with no goal should have no featured goal';
+  select * into r from public.get_public_business('44444444-0000-4000-8000-000000000001');
+  assert r.goal_title = 'Bigger oven' and r.goal_raised_cents = 100000, 'FAIL F4: the detail view has no featured goal';
+  raise notice 'PASS F1-F4: each business shows its newest open goal with only held money counted as raised';
+end $$;
+
 -- ===== The detail function =====
 do $$ declare id uuid := '44444444-0000-4000-8000-000000000001'; begin
   assert (select count(*) from public.get_public_business(id)) = 1, 'FAIL D1: verified business not found';

@@ -86,6 +86,15 @@ Dependencies only point inwards. This is enforced by ESLint (`no-restricted-impo
 - **Everything is audited:** contribution starts and confirmations, approvals, rejections, payouts and identity changes are written to `audit_log`.
 - **Known gaps:** no refunds yet (a failed or expired checkout simply never counts), no real identity provider (a demo switch exists and is off by default), no payout destination (bank details) collected from founders yet, and no rate limiting beyond the database rules.
 
+## Hardening
+
+- **Administrator two-factor login, enforced twice.** The app sends administrators who have not passed the authenticator step to `/admin/mfa`. More importantly, `is_admin()` in the database now also requires the login token to be `aal2` (password plus authenticator code). Every administrator rule (access policies, triggers, review functions, file-storage rules) goes through it, so a stolen password alone gives no admin powers at all, even if a screen were bypassed.
+- **No second authenticator for an existing one.** Setup is refused when a verified authenticator already exists, and the code is always checked against that existing one, so someone with only a stolen password cannot enroll their own.
+- **Rate limits held in the database.** `rate_limit(action)` counts attempts per person per hour for contributions, uploads and milestone proofs. The limits live in the settings table the browser cannot read, only known action names are accepted, and if the check itself fails the answer is "no".
+- **Unpaid checkouts are capped** at 5 open at a time per supporter, so nobody can tie up a goal's capacity; expired checkouts stop counting.
+- **CI runs the database tests** against PostgreSQL with PostGIS on every pull request.
+- **Known gaps:** uploads are not virus-scanned (needs an external scanner such as ClamAV); the content-security policy still allows inline scripts, which Next.js needs until nonces are added; password-guessing relies on Supabase's built-in sign-in limits (review them under Authentication, Rate Limits); and admin accounts cannot be recovered by another admin.
+
 ## Testing strategy
 
 - **Unit tests (domain):** fast, no mocks needed. Target 90%+ coverage (enforced in `vitest.config.ts`).

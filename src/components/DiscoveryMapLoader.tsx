@@ -7,7 +7,7 @@ import type { MapBusiness } from "./DiscoveryMap";
 const DiscoveryMap = dynamic(() => import("./DiscoveryMap"), {
   ssr: false,
   loading: () => (
-    <p className="flex h-72 items-center justify-center rounded-md bg-slate-100 text-sm text-slate-600">
+    <p className="flex h-72 items-center justify-center rounded-md bg-gray-100 text-sm text-gray-600">
       Loading map…
     </p>
   ),

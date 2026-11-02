@@ -48,7 +48,7 @@ export function GoalForm() {
       noValidate
     >
       {state.message && (
-        <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+        <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
           {state.message}
         </p>
       )}
@@ -86,9 +86,9 @@ export function GoalForm() {
         error={f.kind}
       />
 
-      <fieldset className="space-y-3 rounded-md border border-slate-200 p-3">
-        <legend className="px-1 text-sm font-medium text-slate-800">Milestones</legend>
-        <p className="text-xs text-slate-600">
+      <fieldset className="space-y-3 rounded-xl border border-gray-200 p-3">
+        <legend className="px-1 text-sm font-medium text-gray-800">Milestones</legend>
+        <p className="text-xs text-gray-600">
           Break the goal into steps. Money is released one step at a time, after you show proof (for
           example a receipt). The amounts must add up to the total.
         </p>
@@ -123,7 +123,7 @@ export function GoalForm() {
             Add another step
           </button>
         )}
-        <p role="status" className={`text-sm ${matches ? "text-green-700" : "text-slate-700"}`}>
+        <p role="status" className={`text-sm ${matches ? "text-green-700" : "text-gray-700"}`}>
           {sums.target === null
             ? "Enter the total amount to see how your steps add up."
             : matches
@@ -142,14 +142,10 @@ export function GoalForm() {
       </fieldset>
 
       <div className="flex items-center gap-3">
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-md bg-brand px-5 py-2.5 font-medium text-white hover:bg-brand-dark disabled:opacity-60"
-        >
+        <button type="submit" disabled={pending} className="btn-primary px-5">
           {pending ? "Saving…" : "Create goal"}
         </button>
-        <Link href="/business" className="text-sm text-slate-600 underline">
+        <Link href="/business" className="text-sm text-gray-600 underline">
           Cancel
         </Link>
       </div>

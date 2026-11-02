@@ -30,3 +30,10 @@ end $$;
 grant usage on schema storage to anon, authenticated;
 grant select, insert, update, delete on storage.objects to authenticated;
 grant execute on function storage.foldername(text) to anon, authenticated;
+
+-- Stand-in for auth.jwt(). When a test sets no claims it returns aal2, so earlier tests keep modelling a
+-- fully signed-in administrator. Tests that care set request.jwt.claims explicitly.
+create or replace function auth.jwt() returns jsonb language sql stable as $$
+  select coalesce(nullif(current_setting('request.jwt.claims', true), '')::jsonb, jsonb_build_object('aal', 'aal2'))
+$$;
+grant execute on function auth.jwt() to anon, authenticated, service_role;

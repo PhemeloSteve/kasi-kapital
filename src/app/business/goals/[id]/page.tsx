@@ -42,18 +42,23 @@ export default async function ManageGoalPage({
   const canSendProof = business.verification === "verified";
 
   return (
-    <DashboardShell title={goal.title} roleLabel="Business account" name={user.fullName}>
-      <Link href="/business" className="text-sm text-slate-600 underline">
+    <DashboardShell
+      role="business"
+      name={user.fullName}
+      title={goal.title}
+      subtitle="Upload proof for each milestone to release its money."
+    >
+      <Link href="/business" className="text-sm text-gray-600 underline">
         Back to your business
       </Link>
 
       {notice && notices[notice] && (
-        <p role="status" className="mt-4 rounded-md bg-green-50 p-3 text-sm text-green-900">
+        <p role="status" className="mt-4 rounded-xl bg-green-50 p-3 text-sm text-green-900">
           {notices[notice]}
         </p>
       )}
 
-      <p className="mt-4 text-sm text-slate-700">
+      <p className="mt-4 text-sm text-gray-700">
         For each step, upload an invoice or quote that shows what the money is for. An administrator
         checks it, and the money for that step is released to you once it is approved and the goal
         has raised enough.
@@ -86,7 +91,7 @@ export default async function ManageGoalPage({
           )}
         />
         {!canSendProof && (
-          <p className="mt-3 rounded-md bg-amber-50 p-3 text-sm text-amber-900">
+          <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
             You can send proof once your business is verified.
           </p>
         )}

@@ -15,7 +15,7 @@ import { saCities } from "./saCities";
 const LocationMap = dynamic(() => import("./LocationMap"), {
   ssr: false,
   loading: () => (
-    <p className="flex h-64 items-center justify-center rounded-md bg-slate-100 text-sm text-slate-600">
+    <p className="flex h-64 items-center justify-center rounded-md bg-gray-100 text-sm text-gray-600">
       Loading map…
     </p>
   ),
@@ -75,7 +75,7 @@ export function BusinessForm({ defaults, hasSavedLocation = false, isEdit = fals
   return (
     <form action={action} className="space-y-5" noValidate>
       {state.message && (
-        <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+        <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
           {state.message}
         </p>
       )}
@@ -113,13 +113,13 @@ export function BusinessForm({ defaults, hasSavedLocation = false, isEdit = fals
         hint="This is shown publicly. Never enter your home address."
       />
 
-      <div className="rounded-md border border-slate-200 p-3">
+      <div className="rounded-xl border border-gray-200 p-3">
         <input type="hidden" name="lat" value={point?.lat ?? ""} />
         <input type="hidden" name="lng" value={point?.lng ?? ""} />
-        <p className="text-sm font-medium text-slate-800">
-          Show your area on the map <span className="font-normal text-slate-500">(optional)</span>
+        <p className="text-sm font-medium text-gray-800">
+          Show your area on the map <span className="font-normal text-gray-500">(optional)</span>
         </p>
-        <p className="mt-1 text-xs text-slate-600">
+        <p className="mt-1 text-xs text-gray-600">
           Click the map where your business is, or use the buttons. We only save an approximate area
           of about 1 km, never an exact spot.
         </p>
@@ -129,11 +129,11 @@ export function BusinessForm({ defaults, hasSavedLocation = false, isEdit = fals
             type="button"
             onClick={findMyLocation}
             disabled={geo.status === "asking"}
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50 disabled:opacity-60"
+            className="btn-secondary"
           >
             {geo.status === "asking" ? "Finding you…" : "Use my current location"}
           </button>
-          <label className="text-sm text-slate-700">
+          <label className="text-sm text-gray-700">
             <span className="sr-only">Jump the map to a city</span>
             <select
               defaultValue=""
@@ -141,7 +141,7 @@ export function BusinessForm({ defaults, hasSavedLocation = false, isEdit = fals
                 const city = saCities.find((c) => c.name === event.target.value);
                 if (city) setFocus({ lat: city.lat, lng: city.lng });
               }}
-              className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+              className="rounded-xl border border-gray-300 px-2 py-1.5 text-sm"
             >
               <option value="" disabled>
                 Jump to a city…
@@ -159,7 +159,7 @@ export function BusinessForm({ defaults, hasSavedLocation = false, isEdit = fals
           <LocationMap point={point} focus={focus} onPick={choose} />
         </div>
 
-        <p role="status" className="mt-2 text-xs text-slate-600">
+        <p role="status" className="mt-2 text-xs text-gray-600">
           {point
             ? "Area chosen. It will be saved when you press the save button below. Click the map again to change it."
             : geo.status === "failed"
@@ -169,7 +169,7 @@ export function BusinessForm({ defaults, hasSavedLocation = false, isEdit = fals
                 : "No area chosen yet."}
         </p>
         {geo.status === "failed" && point && (
-          <p className="mt-1 text-xs text-slate-500">{geo.message}</p>
+          <p className="mt-1 text-xs text-gray-500">{geo.message}</p>
         )}
         {(f.lat || f.lng) && (
           <p role="alert" className="mt-1 text-sm text-red-700">
@@ -178,9 +178,9 @@ export function BusinessForm({ defaults, hasSavedLocation = false, isEdit = fals
         )}
       </div>
 
-      <fieldset className="space-y-4 rounded-md border border-slate-200 p-3">
-        <legend className="px-1 text-sm font-medium text-slate-800">
-          Your online pages <span className="font-normal text-slate-500">(optional)</span>
+      <fieldset className="space-y-4 rounded-xl border border-gray-200 p-3">
+        <legend className="px-1 text-sm font-medium text-gray-800">
+          Your online pages <span className="font-normal text-gray-500">(optional)</span>
         </legend>
         <FormField
           id="facebookUrl"
@@ -215,14 +215,10 @@ export function BusinessForm({ defaults, hasSavedLocation = false, isEdit = fals
       </fieldset>
 
       <div className="flex items-center gap-3">
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-md bg-brand px-5 py-2.5 font-medium text-white hover:bg-brand-dark disabled:opacity-60"
-        >
+        <button type="submit" disabled={pending} className="btn-primary px-5">
           {pending ? "Saving…" : isEdit ? "Save changes" : "Create business profile"}
         </button>
-        <Link href="/business" className="text-sm text-slate-600 underline">
+        <Link href="/business" className="text-sm text-gray-600 underline">
           Cancel
         </Link>
       </div>

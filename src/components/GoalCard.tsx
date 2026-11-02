@@ -3,11 +3,13 @@ import type { ReactNode } from "react";
 import type { GoalFunding, GoalRecord, MilestonePayout } from "@/application/ports";
 import { allocateFunding, progressPercent } from "@/domain/funding";
 import { formatRand } from "@/domain/money";
-import { milestoneLabel } from "./milestone-labels";
+import { MilestoneRow } from "./MilestoneRow";
+import { milestoneLabel, milestoneTone, type MilestoneTone } from "./milestone-labels";
+import { ProgressBar } from "./ui/ProgressBar";
 
 const kindLabels = {
-  donation: "Donation (nothing expected back)",
-  presale: "Pre-sale (supporters get goods or vouchers)",
+  donation: "Donation: nothing expected back",
+  presale: "Pre-sale: supporters get goods or vouchers",
 } as const;
 
 type Milestone = GoalRecord["milestones"][number];
@@ -18,8 +20,10 @@ type Props = {
   funding?: GoalFunding;
   payouts?: MilestonePayout[];
   manageHref?: string;
+  /** A bigger version for the goal a page is mainly about. */
+  featured?: boolean;
   /** Extra content under a milestone, such as the founder's proof upload. */
-  milestoneExtra?: (milestone: Milestone) => ReactNode;
+  milestoneExtra?: (milestone: Milestone, context: { tone: MilestoneTone }) => ReactNode;
   /** Content under the goal, such as the contribute form. */
   children?: ReactNode;
 };
@@ -29,6 +33,7 @@ export function GoalCard({
   funding,
   payouts = [],
   manageHref,
+  featured,
   milestoneExtra,
   children,
 }: Props) {
@@ -37,66 +42,79 @@ export function GoalCard({
   const allocation = allocateFunding(raised, goal.milestones);
 
   return (
-    <article className="rounded-lg border border-slate-200 p-4">
-      <div className="flex items-start justify-between gap-3">
+    <article id={`goal-${goal.id}`} className="card p-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="font-semibold">{goal.title}</h3>
-          <p className="text-xs text-slate-500">
-            {kindLabels[goal.kind]}
-            {!goal.isOpen && " · Closed"}
-          </p>
+          <h3 className={`font-bold text-gray-900 ${featured ? "text-xl" : "text-lg"}`}>
+            {goal.title}
+          </h3>
+          <p className="text-sm text-gray-500">{kindLabels[goal.kind]}</p>
         </div>
-        <p className="text-lg font-bold text-brand">{formatRand(goal.targetCents)}</p>
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-semibold ${goal.isOpen ? "bg-brand-light text-brand" : "bg-gray-100 text-gray-600"}`}
+        >
+          {goal.isOpen ? "Funding open" : "Closed"}
+        </span>
       </div>
-      {goal.description && <p className="mt-2 text-sm text-slate-700">{goal.description}</p>}
+      {goal.description && <p className="mt-3 text-sm text-gray-700">{goal.description}</p>}
 
-      {funding && (
-        <div className="mt-3">
-          <div
-            role="progressbar"
-            aria-valuenow={percent}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label={`${goal.title}: ${percent}% funded`}
-            className="h-2.5 overflow-hidden rounded-full bg-slate-200"
-          >
-            <div className="h-full rounded-full bg-brand" style={{ width: `${percent}%` }} />
-          </div>
-          <p className="mt-1 text-xs text-slate-600">
-            {formatRand(raised)} raised of {formatRand(goal.targetCents)} · {funding.supporterCount}{" "}
-            supporter{funding.supporterCount === 1 ? "" : "s"}
-            {funding.paidOutCents > 0 &&
-              ` · ${formatRand(funding.paidOutCents)} paid out to the business`}
-          </p>
-        </div>
-      )}
+      <div className="mt-5">
+        {funding ? (
+          <>
+            <div className="flex flex-wrap items-end justify-between gap-2">
+              <p className={`font-bold text-gray-900 ${featured ? "text-4xl" : "text-2xl"}`}>
+                {formatRand(raised)}{" "}
+                <span className="text-base font-medium text-gray-500">raised</span>
+              </p>
+              <p className="text-sm font-medium text-gray-500">
+                Target: {formatRand(goal.targetCents)}
+              </p>
+            </div>
+            <div className="mt-3">
+              <ProgressBar
+                percent={percent}
+                label={`${goal.title}: ${percent}% funded`}
+                large={featured}
+              />
+            </div>
+            <p className="mt-2 text-sm text-gray-600">
+              <span className="font-semibold text-brand">{percent}% funded</span> ·{" "}
+              {funding.supporterCount} supporter{funding.supporterCount === 1 ? "" : "s"}
+              {funding.paidOutCents > 0 &&
+                ` · ${formatRand(funding.paidOutCents)} paid out to the business`}
+            </p>
+          </>
+        ) : (
+          <p className="text-2xl font-bold text-gray-900">{formatRand(goal.targetCents)}</p>
+        )}
+      </div>
 
-      <ol className="mt-3 space-y-2 text-sm">
+      <h4 className="mb-3 mt-6 text-sm font-semibold uppercase tracking-wide text-gray-500">
+        Milestones and payouts
+      </h4>
+      <ol className="space-y-2.5">
         {goal.milestones.map((m, index) => {
           const payout = payouts.find((p) => p.milestoneId === m.id)?.status ?? null;
           const funded = funding ? (allocation[index]?.state ?? null) : null;
+          const input = { status: m.status, funded, payout };
           return (
-            <li key={m.id} className="rounded bg-slate-50 px-3 py-2">
-              <div className="flex items-center justify-between gap-3">
-                <span>
-                  {index + 1}. {m.title}
-                </span>
-                <span className="text-right text-slate-600">
-                  {formatRand(m.amountCents)}{" "}
-                  <span className="text-xs">
-                    ({milestoneLabel({ status: m.status, funded, payout })})
-                  </span>
-                </span>
-              </div>
-              {milestoneExtra?.(m)}
-            </li>
+            <MilestoneRow
+              key={m.id}
+              index={index + 1}
+              title={m.title}
+              amountCents={m.amountCents}
+              label={milestoneLabel(input)}
+              tone={milestoneTone(input)}
+            >
+              {milestoneExtra?.(m, { tone: milestoneTone(input) })}
+            </MilestoneRow>
           );
         })}
       </ol>
 
       {children}
       {manageHref && (
-        <Link href={manageHref} className="mt-3 inline-block text-sm text-brand underline">
+        <Link href={manageHref} className="btn-secondary mt-5">
           Manage milestones and proof
         </Link>
       )}

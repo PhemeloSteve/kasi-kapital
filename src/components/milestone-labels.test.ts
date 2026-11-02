@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { milestoneLabel } from "./milestone-labels";
+import { milestoneLabel, milestoneTone } from "./milestone-labels";
 
 describe("milestoneLabel", () => {
   it.each([
@@ -14,5 +14,21 @@ describe("milestoneLabel", () => {
     [{ status: "pending", funded: null, payout: null }, "Not started"],
   ] as const)("describes %j as %s", (input, label) => {
     expect(milestoneLabel(input)).toBe(label);
+  });
+});
+
+describe("milestoneTone", () => {
+  it.each([
+    [{ status: "approved", funded: "funded", payout: "paid" }, "success"],
+    [{ status: "approved", funded: "funded", payout: "pending" }, "waiting"],
+    [{ status: "approved", funded: "partial", payout: null }, "waiting"],
+    [{ status: "proof_submitted", funded: "funded", payout: null }, "waiting"],
+    [{ status: "rejected", funded: "funded", payout: null }, "attention"],
+    [{ status: "pending", funded: "funded", payout: null }, "action"],
+    [{ status: "pending", funded: "partial", payout: null }, "locked"],
+    [{ status: "pending", funded: "unfunded", payout: null }, "locked"],
+    [{ status: "pending", funded: null, payout: null }, "locked"],
+  ] as const)("treats %j as %s", (input, tone) => {
+    expect(milestoneTone(input)).toBe(tone);
   });
 });

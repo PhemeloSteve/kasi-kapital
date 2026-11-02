@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isUserRole, landingPathForRole, signupRoles } from "./roles";
+import { isUserRole, landingPathForRole, roleLabels, signupRoles } from "./roles";
 
 describe("roles", () => {
   it("gives every role its own landing page", () => {
@@ -18,5 +18,10 @@ describe("roles", () => {
     expect(isUserRole("superuser")).toBe(false);
     expect(isUserRole("toString")).toBe(false);
     expect(isUserRole(undefined)).toBe(false);
+  });
+
+  it("has a readable label for every role", () => {
+    for (const role of ["business", "investor", "donor", "admin"] as const)
+      expect(roleLabels[role].length).toBeGreaterThan(3);
   });
 });

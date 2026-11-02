@@ -16,7 +16,7 @@ export function DocumentUploadForm() {
   return (
     <form action={action} className="space-y-4" noValidate>
       {state.message && (
-        <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+        <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
           {state.message}
         </p>
       )}
@@ -27,7 +27,7 @@ export function DocumentUploadForm() {
         options={options}
       />
       <div>
-        <label htmlFor="file" className="block text-sm font-medium text-slate-800">
+        <label htmlFor="file" className="block text-sm font-medium text-gray-800">
           File
         </label>
         <input
@@ -39,16 +39,12 @@ export function DocumentUploadForm() {
           aria-describedby="file-hint"
           className="mt-1 block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-brand-light file:px-3 file:py-2 file:text-sm file:font-medium file:text-brand-dark"
         />
-        <p id="file-hint" className="mt-1 text-xs text-slate-500">
+        <p id="file-hint" className="mt-1 text-xs text-gray-500">
           PDF, JPG or PNG, up to {maxMb} MB. It is stored privately: only you and our verification
           team can open it.
         </p>
       </div>
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-md bg-brand px-5 py-2.5 font-medium text-white hover:bg-brand-dark disabled:opacity-60"
-      >
+      <button type="submit" disabled={pending} className="btn-primary px-5">
         {pending ? "Uploading…" : "Upload document"}
       </button>
     </form>

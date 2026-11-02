@@ -19,5 +19,10 @@ export function readSignUpForm(formData: FormData) {
 }
 
 export function readLogInForm(formData: FormData) {
-  return { email: text(formData, "email"), password: text(formData, "password") };
+  return {
+    email: text(formData, "email"),
+    password: text(formData, "password"),
+    // A ticked checkbox is submitted as "on"; an unticked one is not submitted at all.
+    keep: formData.get("keep") === "on",
+  };
 }

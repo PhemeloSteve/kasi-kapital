@@ -32,3 +32,17 @@ export function progressPercent(raisedCents: number, targetCents: number): numbe
   if (targetCents <= 0) return 0;
   return Math.min(100, Math.max(0, Math.floor((raisedCents / targetCents) * 100)));
 }
+
+export type ContributionLike = { amountCents: number; status: string; businessId: string | null };
+
+/** The three numbers on a supporter's dashboard. Only money that is actually held counts as contributed. */
+export function summarizeContributions(contributions: ReadonlyArray<ContributionLike>) {
+  const held = contributions.filter((c) => c.status === "held" || c.status === "released");
+  const pending = contributions.filter((c) => c.status === "pending");
+  return {
+    contributedCents: held.reduce((sum, c) => sum + c.amountCents, 0),
+    businessesSupported: new Set(held.flatMap((c) => (c.businessId ? [c.businessId] : []))).size,
+    waitingCents: pending.reduce((sum, c) => sum + c.amountCents, 0),
+    waitingCount: pending.length,
+  };
+}

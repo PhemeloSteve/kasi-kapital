@@ -105,6 +105,19 @@ update public.profiles set role = 'admin'
 where id = (select id from auth.users where email = 'you@example.com');
 ```
 
+## Administrator two-factor login
+
+Administrators must use an authenticator app. After logging in, `/admin` sends you to a setup page the first time (scan the QR code, then enter the 6-digit code) and asks for a code on every later login. Without it, administrator powers do not work at all: the database itself refuses them, so a stolen password is not enough.
+
+- **Set it up first.** Right after promoting your account to admin, log in and complete the setup straight away. Until a second factor exists, anyone with your password could enroll their own.
+- **Check the project setting:** in the Supabase dashboard, Authentication, Multi-Factor, make sure TOTP is enabled (it normally is).
+- **Lost your phone?** Another administrator cannot reset it. As the project owner, run this in the SQL Editor, then set up a new authenticator at your next login:
+
+```sql
+delete from auth.mfa_factors
+where user_id = (select id from auth.users where email = 'you@example.com');
+```
+
 ## Payments in this build
 
 Payments are **simulated**. Supporters pay through a demo checkout and no real money moves. To make the demo checkout work, add your project's service-role key to `.env.local` as `SUPABASE_SERVICE_ROLE_KEY` (Supabase dashboard, Project Settings, API). It is a powerful secret: keep it on the server only and never commit it. `PAYMENT_PROVIDER=mock` selects the demo provider. Setting `ALLOW_DEMO_KYC=true` lets supporters verify themselves with one click for demos; leave it `false` in production.
@@ -187,6 +200,9 @@ Run everything locally with `npm run check`. Report vulnerabilities as described
 - [x] Investor and donor views (discovery, business pages, my contributions)
 - [ ] Supply circles: bulk buying and stock swaps
 - [ ] YouTube, Facebook and LinkedIn link-outs
+- [x] Admin two-factor login, per-person rate limits, and an unpaid-checkout cap
+- [x] Full UI redesign — green/cream palette, your logo, responsive layout for every screen
+- [x] Database tests run in CI
 - [ ] Live KYC, open-banking and payment providers
 - [ ] Licensed equity / revenue-share partnership
 

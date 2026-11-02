@@ -17,6 +17,7 @@ const business: PublicBusiness = {
   openGoalCount: 1,
   openGoalTargetCents: 500000,
   distanceKm: null,
+  featuredGoal: null,
 };
 
 function makeStore(overrides: Partial<DiscoveryStore> = {}): DiscoveryStore {

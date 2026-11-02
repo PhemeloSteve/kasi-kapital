@@ -54,6 +54,8 @@ export interface AuthGateway {
   signIn(input: {
     email: string;
     password: string;
+    /** Stay signed in after the browser closes. */
+    keepSignedIn: boolean;
   }): Promise<Result<CurrentUser, "invalid_credentials" | "unavailable">>;
   signOut(): Promise<void>;
   getCurrentUser(): Promise<CurrentUser | null>;
@@ -185,6 +187,8 @@ export type PublicBusiness = {
   openGoalCount: number;
   openGoalTargetCents: number;
   distanceKm: number | null;
+  /** The business's newest open goal, with the money held for it so far. */
+  featuredGoal: { id: string; title: string; targetCents: number; raisedCents: number } | null;
 };
 
 export type DiscoveryFilters = {
@@ -213,7 +217,15 @@ export type ContributionRecord = {
 };
 
 export type StartContributionError =
-  | { code: "not_allowed" | "goal_not_found" | "goal_closed" | "amount_out_of_range" | "failed" }
+  | {
+      code:
+        | "not_allowed"
+        | "goal_not_found"
+        | "goal_closed"
+        | "amount_out_of_range"
+        | "too_many_pending"
+        | "failed";
+    }
   | { code: "goal_full" | "limit_reached"; remainingCents: number };
 
 /** What a supporter does, always as themselves. */
@@ -290,4 +302,28 @@ export interface MilestoneStore {
     note: string | null;
   }): Promise<Result<{ payoutCreated: boolean }, "note_required" | "not_waiting" | "failed">>;
   listPendingPayouts(): Promise<PendingPayoutDetail[]>;
+}
+
+// ---------- Hardening ----------
+export type AssuranceLevel = "aal1" | "aal2";
+
+/** Two-factor login (authenticator app) for administrators. */
+export interface MfaGateway {
+  /** aal2 means the current session has passed the authenticator-code step. */
+  getLevel(): Promise<AssuranceLevel>;
+  getStatus(): Promise<{ level: AssuranceLevel; verifiedFactorId: string | null }>;
+  beginEnrollment(): Promise<
+    Result<{ factorId: string; qrCode: string; secret: string }, "failed">
+  >;
+  verify(input: {
+    factorId: string;
+    code: string;
+  }): Promise<Result<true, "invalid_code" | "failed">>;
+}
+
+export type RateLimitedAction = "contribute" | "upload" | "proof";
+
+/** Counts one attempt by the signed-in person. The limits themselves live in the database. */
+export interface RateLimiter {
+  allow(action: RateLimitedAction): Promise<boolean>;
 }

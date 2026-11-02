@@ -12,8 +12,8 @@ const statusLabels: Record<ContributionStatus, { label: string; className: strin
   pending: { label: "Waiting for payment", className: "bg-amber-100 text-amber-900" },
   held: { label: "Held safely", className: "bg-green-100 text-green-800" },
   released: { label: "Released", className: "bg-green-100 text-green-800" },
-  failed: { label: "Not completed", className: "bg-slate-100 text-slate-700" },
-  refunded: { label: "Refunded", className: "bg-slate-100 text-slate-700" },
+  failed: { label: "Not completed", className: "bg-gray-100 text-gray-700" },
+  refunded: { label: "Refunded", className: "bg-gray-100 text-gray-700" },
 };
 
 const notices: Record<string, string> = {
@@ -47,25 +47,26 @@ export default async function ContributionsPage({
   return (
     <DashboardShell
       title="My contributions"
-      roleLabel={user.role === "donor" ? "Donor account" : "Investor account"}
+      subtitle="Everything you have given, and where it stands."
+      role={user.role}
       name={user.fullName}
     >
-      <Link href={landingPathForRole(user.role)} className="text-sm text-slate-600 underline">
+      <Link href={landingPathForRole(user.role)} className="text-sm text-gray-600 underline">
         Back to businesses
       </Link>
 
       {notice && notices[notice] && (
-        <p role="status" className="mt-4 rounded-md bg-green-50 p-3 text-sm text-green-900">
+        <p role="status" className="mt-4 rounded-xl bg-green-50 p-3 text-sm text-green-900">
           {notices[notice]}
         </p>
       )}
       {error && errors[error] && (
-        <p role="alert" className="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-800">
+        <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-800">
           {errors[error]}
         </p>
       )}
 
-      <p className="mt-4 text-sm text-slate-600">
+      <p className="mt-4 text-sm text-gray-600">
         Total held for businesses: <strong>{formatRand(heldTotal)}</strong>. Until your identity is
         verified you can give up to R1 000 in total.{" "}
         <Link href="/verify-identity" className="text-brand underline">
@@ -74,13 +75,13 @@ export default async function ContributionsPage({
       </p>
 
       {contributions.length === 0 ? (
-        <p className="mt-6 rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-600">
+        <p className="mt-6 card border-dashed p-8 text-center text-sm text-gray-600">
           You haven&apos;t contributed yet.
         </p>
       ) : (
         <ul className="mt-6 space-y-3">
           {contributions.map((c) => (
-            <li key={c.id} className="rounded-lg border border-slate-200 p-3">
+            <li key={c.id} className="card p-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <p className="font-medium">
@@ -92,7 +93,7 @@ export default async function ContributionsPage({
                       (c.businessName ?? "A business")
                     )}
                   </p>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-gray-600">
                     {c.goalTitle ?? "A funding goal"} · {dateFormat.format(new Date(c.createdAt))}
                   </p>
                 </div>

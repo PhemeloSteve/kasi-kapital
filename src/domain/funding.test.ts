@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allocateFunding, progressPercent } from "./funding";
+import { allocateFunding, progressPercent, summarizeContributions } from "./funding";
 
 const milestones = [
   { id: "a", amountCents: 300_000 },
@@ -39,5 +39,33 @@ describe("progressPercent", () => {
     [-10, 500, 0],
   ])("%i of %i is %i%%", (raised, target, expected) => {
     expect(progressPercent(raised, target)).toBe(expected);
+  });
+});
+
+describe("summarizeContributions", () => {
+  it("counts only held money as contributed and counts each business once", () => {
+    expect(
+      summarizeContributions([
+        { amountCents: 10_000, status: "held", businessId: "a" },
+        { amountCents: 5_000, status: "held", businessId: "a" },
+        { amountCents: 20_000, status: "held", businessId: "b" },
+        { amountCents: 7_000, status: "pending", businessId: "c" },
+        { amountCents: 9_000, status: "failed", businessId: "d" },
+        { amountCents: 1_000, status: "refunded", businessId: "e" },
+      ]),
+    ).toEqual({
+      contributedCents: 35_000,
+      businessesSupported: 2,
+      waitingCents: 7_000,
+      waitingCount: 1,
+    });
+  });
+  it("is all zeros for someone who has not given yet", () => {
+    expect(summarizeContributions([])).toEqual({
+      contributedCents: 0,
+      businessesSupported: 0,
+      waitingCents: 0,
+      waitingCount: 0,
+    });
   });
 });

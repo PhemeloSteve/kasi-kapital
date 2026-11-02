@@ -22,22 +22,22 @@ export function ContributeForm({
 
   if (remainingCents <= 0) {
     return (
-      <p className="mt-3 rounded-md bg-green-50 p-3 text-sm text-green-900">
+      <p className="mt-3 rounded-xl bg-green-50 p-3 text-sm text-green-900">
         This goal is fully funded. Thank you to everyone who gave.
       </p>
     );
   }
 
   return (
-    <form action={action} className="mt-4 rounded-md border border-slate-200 p-3" noValidate>
+    <form action={action} className="mt-4 rounded-xl border border-gray-200 p-3" noValidate>
       <input type="hidden" name="goalId" value={goalId} />
-      <label htmlFor={inputId} className="block text-sm font-medium text-slate-800">
+      <label htmlFor={inputId} className="block text-sm font-medium text-gray-800">
         Support &ldquo;{goalTitle}&rdquo;
       </label>
       <div className="mt-1 flex flex-wrap items-start gap-2">
         <div>
-          <div className="flex items-center rounded-md border border-slate-300 focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/30">
-            <span className="pl-3 text-slate-500" aria-hidden="true">
+          <div className="flex items-center rounded-md border border-gray-300 focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/30">
+            <span className="pl-3 text-gray-500" aria-hidden="true">
               R
             </span>
             <input
@@ -50,15 +50,11 @@ export function ContributeForm({
               className="w-32 rounded-md bg-transparent px-2 py-2 outline-none"
             />
           </div>
-          <p id={`${inputId}-hint`} className="mt-1 text-xs text-slate-500">
+          <p id={`${inputId}-hint`} className="mt-1 text-xs text-gray-500">
             From R10 to {formatRand(remainingCents)}
           </p>
         </div>
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-md bg-brand px-5 py-2 font-medium text-white hover:bg-brand-dark disabled:opacity-60"
-        >
+        <button type="submit" disabled={pending} className="btn-primary px-5">
           {pending ? "Starting…" : "Continue to checkout"}
         </button>
       </div>

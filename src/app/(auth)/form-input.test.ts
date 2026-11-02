@@ -45,6 +45,10 @@ describe("readLogInForm", () => {
     expect(readLogInForm(form({ email: "a@b.co", password: "pw" }))).toEqual({
       email: "a@b.co",
       password: "pw",
+      keep: false,
     });
+  });
+  it("remembers when the person ticked Keep me logged in", () => {
+    expect(readLogInForm(form({ email: "a@b.co", password: "pw", keep: "on" })).keep).toBe(true);
   });
 });

@@ -18,3 +18,10 @@ export function landingPathForRole(role: UserRole): string {
 export function isUserRole(value: unknown): value is UserRole {
   return typeof value === "string" && Object.hasOwn(landingPaths, value);
 }
+
+export const roleLabels: Record<UserRole, string> = {
+  business: "Business account",
+  investor: "Investor",
+  donor: "Donor",
+  admin: "Administrator",
+};

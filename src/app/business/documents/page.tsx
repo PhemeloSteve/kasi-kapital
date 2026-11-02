@@ -44,34 +44,39 @@ export default async function DocumentsPage({
   const label = (type: string) => (isUploadableType(type) ? documentInfo[type].label : type);
 
   return (
-    <DashboardShell title="Verify your business" roleLabel="Business account" name={user.fullName}>
+    <DashboardShell
+      role="business"
+      name={user.fullName}
+      title="Verify your business"
+      subtitle="Upload your documents so supporters can find and trust you."
+    >
       <div className="space-y-8">
-        <Link href="/business" className="text-sm text-slate-600 underline">
+        <Link href="/business" className="text-sm text-gray-600 underline">
           Back to your business
         </Link>
 
         {notice && pageNotices[notice] && (
-          <p role="status" className="rounded-md bg-green-50 p-3 text-sm text-green-900">
+          <p role="status" className="rounded-xl bg-green-50 p-3 text-sm text-green-900">
             {pageNotices[notice]}
           </p>
         )}
         {error && pageErrors[error] && (
-          <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+          <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
             {pageErrors[error]}
           </p>
         )}
 
-        <section className="rounded-lg border border-slate-200 p-4">
+        <section className="card p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="font-semibold">{business.name}</h2>
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-gray-600">
                 Trust level: {trustTierLabels[business.trustTier]}
               </p>
             </div>
             <VerificationBadge status={business.verification} />
           </div>
-          <p className="mt-3 text-sm text-slate-700">
+          <p className="mt-3 text-sm text-gray-700">
             Supporters can see your business once we have checked <strong>who you are</strong> and{" "}
             <strong>that the business trades</strong>. Everything you upload stays private.
           </p>
@@ -80,17 +85,17 @@ export default async function DocumentsPage({
               const done = documents.some((d) => d.type === type && d.status !== "rejected");
               return (
                 <li key={type} className="flex gap-2">
-                  <span aria-hidden="true" className={done ? "text-green-700" : "text-slate-400"}>
+                  <span aria-hidden="true" className={done ? "text-green-700" : "text-gray-400"}>
                     {done ? "✓" : "○"}
                   </span>
                   <span>
                     <span className="font-medium">
                       {documentInfo[type].label}
                       {!documentInfo[type].required && (
-                        <span className="font-normal text-slate-500"> (optional)</span>
+                        <span className="font-normal text-gray-500"> (optional)</span>
                       )}
                     </span>
-                    <span className="block text-xs text-slate-600">{documentInfo[type].hint}</span>
+                    <span className="block text-xs text-gray-600">{documentInfo[type].hint}</span>
                   </span>
                 </li>
               );
@@ -108,17 +113,17 @@ export default async function DocumentsPage({
         <section>
           <h2 className="mb-3 text-lg font-semibold">Your documents</h2>
           {documents.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-600">
+            <p className="card border-dashed p-8 text-center text-sm text-gray-600">
               Nothing uploaded yet.
             </p>
           ) : (
             <ul className="space-y-3">
               {documents.map((doc) => (
-                <li key={doc.id} className="rounded-lg border border-slate-200 p-3">
+                <li key={doc.id} className="card p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <p className="text-sm font-medium">{label(doc.type)}</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-gray-500">
                         Uploaded {dateFormat.format(new Date(doc.createdAt))}
                       </p>
                     </div>
@@ -153,15 +158,15 @@ export default async function DocumentsPage({
           )}
         </section>
 
-        <section className="rounded-lg border border-slate-200 p-4">
+        <section className="card p-5">
           <h2 className="text-lg font-semibold">Submit for review</h2>
           {business.verification === "pending" && (
-            <p className="mt-2 text-sm text-slate-700">
+            <p className="mt-2 text-sm text-gray-700">
               Your documents are with our team. You can still add more while you wait.
             </p>
           )}
           {business.verification === "verified" && (
-            <p className="mt-2 text-sm text-slate-700">
+            <p className="mt-2 text-sm text-gray-700">
               Your business is verified. Add a CIPC registration to reach the highest trust level.
             </p>
           )}
@@ -179,16 +184,12 @@ export default async function DocumentsPage({
                 </p>
               )}
               {missing.length > 0 && (
-                <p className="mt-2 text-sm text-slate-700">
+                <p className="mt-2 text-sm text-gray-700">
                   Still needed: {missing.map((type) => documentInfo[type].label).join(" and ")}.
                 </p>
               )}
               <form action={submitForReviewAction} className="mt-3">
-                <button
-                  type="submit"
-                  disabled={!canSubmit}
-                  className="rounded-md bg-brand px-5 py-2.5 font-medium text-white hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-50"
-                >
+                <button type="submit" disabled={!canSubmit} className="btn-primary px-5">
                   Submit for review
                 </button>
               </form>

@@ -24,6 +24,7 @@ describe("describeStartError", () => {
       "goal_closed",
       "goal_not_found",
       "not_allowed",
+      "too_many_pending",
       "failed",
       "invalid_input",
     ] as const) {

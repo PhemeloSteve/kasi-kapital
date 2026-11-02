@@ -21,7 +21,7 @@ export function MilestoneProofForm({
     <form action={action} className="mt-2 space-y-2" noValidate>
       <input type="hidden" name="milestoneId" value={milestoneId} />
       <input type="hidden" name="goalId" value={goalId} />
-      <label htmlFor={fileId} className="block text-xs font-medium text-slate-700">
+      <label htmlFor={fileId} className="block text-xs font-medium text-gray-700">
         {label}
       </label>
       <div className="flex flex-wrap items-center gap-2">

@@ -71,41 +71,44 @@ export default async function AdminPage({
   const groups = groupByBusiness(queue);
 
   const message = noticeText(notice, paid, failed);
-  const input = "min-w-0 flex-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm";
+  const input = "min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm";
 
   return (
-    <DashboardShell title="Admin" roleLabel="Administrator" name={user.fullName}>
+    <DashboardShell
+      role="admin"
+      name={user.fullName}
+      title="Review queue"
+      subtitle="Check documents and proof before any money moves."
+    >
       {message && (
-        <p role="status" className="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-900">
+        <p role="status" className="mb-4 rounded-xl bg-green-50 p-3 text-sm text-green-900">
           {message}
         </p>
       )}
       {error && errors[error] && (
-        <p role="alert" className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-800">
+        <p role="alert" className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-800">
           {errors[error]}
         </p>
       )}
-      <p className="mb-6 text-sm text-slate-600">
-        Opening a document is recorded in the audit log.
-      </p>
+      <p className="mb-6 text-sm text-gray-600">Opening a document is recorded in the audit log.</p>
 
       <section className="mb-10" aria-labelledby="proofs-heading">
         <h2 id="proofs-heading" className="mb-1 text-lg font-semibold">
           Milestone proofs
         </h2>
-        <p className="mb-3 text-sm text-slate-600">
+        <p className="mb-3 text-sm text-gray-600">
           {proofs.length === 0 ? "No proof is waiting." : `${proofs.length} waiting.`} Approving
           releases that milestone&apos;s money to the founder once the goal has raised enough.
         </p>
         <ul className="space-y-3">
           {proofs.map((p) => (
-            <li key={p.milestoneId} className="rounded-lg border border-slate-200 p-4">
+            <li key={p.milestoneId} className="card p-5">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <p className="font-medium">
                     {p.businessName ?? "A business"} · {p.goalTitle ?? "A goal"}
                   </p>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-gray-600">
                     Milestone: {p.milestoneTitle} · <strong>{formatRand(p.amountCents)}</strong>
                   </p>
                 </div>
@@ -136,7 +139,7 @@ export default async function AdminPage({
                   type="submit"
                   name="decision"
                   value="approve"
-                  className="rounded-md bg-green-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-green-800"
+                  className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
                 >
                   Approve
                 </button>
@@ -144,7 +147,7 @@ export default async function AdminPage({
                   type="submit"
                   name="decision"
                   value="reject"
-                  className="rounded-md bg-red-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-red-800"
+                  className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800"
                 >
                   Reject
                 </button>
@@ -158,14 +161,14 @@ export default async function AdminPage({
         <h2 id="payouts-heading" className="mb-1 text-lg font-semibold">
           Payouts waiting
         </h2>
-        <p className="mb-3 text-sm text-slate-600">
+        <p className="mb-3 text-sm text-gray-600">
           {payouts.length === 0 ? "Nothing is waiting to be paid." : `${payouts.length} to pay.`}
         </p>
         {payouts.length > 0 && (
           <>
             <ul className="space-y-2">
               {payouts.map((p) => (
-                <li key={p.id} className="rounded-lg border border-slate-200 p-3 text-sm">
+                <li key={p.id} className="card p-4 text-sm">
                   <span className="font-medium">{formatRand(p.amountCents)}</span> to{" "}
                   {p.businessName ?? "a business"} for “{p.milestoneTitle ?? "a milestone"}”
                   {p.failureReason && (
@@ -192,25 +195,25 @@ export default async function AdminPage({
         <h2 id="verify-heading" className="mb-1 text-lg font-semibold">
           Business verification
         </h2>
-        <p className="mb-3 text-sm text-slate-600">
+        <p className="mb-3 text-sm text-gray-600">
           {groups.length === 0
             ? "Nothing is waiting for review."
             : `${groups.length} business${groups.length === 1 ? "" : "es"} waiting.`}
         </p>
         <div className="space-y-6">
           {groups.map(({ business, documents }) => (
-            <section key={business.id} className="rounded-lg border border-slate-200 p-4">
+            <section key={business.id} className="card p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h3 className="text-lg font-semibold">{business.name}</h3>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-gray-600">
                     {isBusinessCategory(business.category)
                       ? categoryLabels[business.category]
                       : business.category}
                     {business.suburb && ` · ${business.suburb}`}
                     {business.ownerName && ` · Owner: ${business.ownerName}`}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-gray-500">
                     Trust level now: {trustTierLabels[business.trustTier]}
                   </p>
                 </div>
@@ -218,11 +221,11 @@ export default async function AdminPage({
               </div>
               <ul className="mt-3 space-y-3">
                 {documents.map((doc) => (
-                  <li key={doc.documentId} className="rounded-md bg-slate-50 p-3">
+                  <li key={doc.documentId} className="rounded-xl bg-gray-50 p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="text-sm font-medium">
                         {isUploadableType(doc.type) ? documentInfo[doc.type].label : doc.type}
-                        <span className="ml-2 text-xs font-normal text-slate-500">
+                        <span className="ml-2 text-xs font-normal text-gray-500">
                           uploaded {dateFormat.format(new Date(doc.uploadedAt))}
                         </span>
                       </p>
@@ -251,7 +254,7 @@ export default async function AdminPage({
                         type="submit"
                         name="decision"
                         value="approve"
-                        className="rounded-md bg-green-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-green-800"
+                        className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
                       >
                         Approve
                       </button>
@@ -259,7 +262,7 @@ export default async function AdminPage({
                         type="submit"
                         name="decision"
                         value="reject"
-                        className="rounded-md bg-red-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-red-800"
+                        className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800"
                       >
                         Reject
                       </button>

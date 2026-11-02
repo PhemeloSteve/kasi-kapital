@@ -114,6 +114,24 @@ describe("logIn", () => {
     expect(result).toEqual({ ok: true, value: { landingPath: "/consent" } });
   });
 
+  it("passes the Keep me logged in choice to the sign-in, off by default", async () => {
+    const signIn = vi.fn(async () =>
+      ok({ userId: "u", role: "donor" as const, fullName: null, consented: true }),
+    );
+    await logIn({ auth: makeAuth({ signIn }) }, creds);
+    expect(signIn).toHaveBeenLastCalledWith({
+      email: "a@b.co",
+      password: "whatever-pass",
+      keepSignedIn: false,
+    });
+    await logIn({ auth: makeAuth({ signIn }) }, { ...creds, keep: true });
+    expect(signIn).toHaveBeenLastCalledWith({
+      email: "a@b.co",
+      password: "whatever-pass",
+      keepSignedIn: true,
+    });
+  });
+
   it("returns one generic error for wrong credentials", async () => {
     const auth = makeAuth({ signIn: async () => err("invalid_credentials" as const) });
     expect(await logIn({ auth }, creds)).toEqual({ ok: false, error: "invalid_credentials" });

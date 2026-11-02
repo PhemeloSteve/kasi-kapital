@@ -53,6 +53,8 @@ function toStartError(error: { code?: string; details?: string | null }): StartC
       return { code: "goal_closed" };
     case "KK004":
       return { code: "amount_out_of_range" };
+    case "KK006":
+      return { code: "too_many_pending" };
     case "KK001":
       return { code: "goal_full", remainingCents };
     case "KK002":

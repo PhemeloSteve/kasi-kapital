@@ -20,6 +20,10 @@ const row = z.object({
   open_goal_count: z.coerce.number(),
   open_goal_target_cents: z.coerce.number(),
   distance_km: z.number().nullable(),
+  goal_id: z.string().nullable(),
+  goal_title: z.string().nullable(),
+  goal_target_cents: z.preprocess((v) => (v === null ? null : Number(v)), z.number().nullable()),
+  goal_raised_cents: z.preprocess((v) => (v === null ? null : Number(v)), z.number().nullable()),
 });
 
 function toPublicBusiness(raw: unknown): PublicBusiness | null {
@@ -41,6 +45,15 @@ function toPublicBusiness(raw: unknown): PublicBusiness | null {
     openGoalCount: b.open_goal_count,
     openGoalTargetCents: b.open_goal_target_cents,
     distanceKm: b.distance_km,
+    featuredGoal:
+      b.goal_id !== null && b.goal_title !== null && b.goal_target_cents !== null
+        ? {
+            id: b.goal_id,
+            title: b.goal_title,
+            targetCents: b.goal_target_cents,
+            raisedCents: b.goal_raised_cents ?? 0,
+          }
+        : null,
   };
 }
 

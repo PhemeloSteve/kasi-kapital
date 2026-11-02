@@ -10,6 +10,7 @@ Please do **not** open a public issue. Email the maintainer (add your contact ad
 - Row Level Security on all tables; money movement happens only server-side.
 - Private storage with signed URLs for identity and bank documents.
 - Uploaded documents are checked by content type and size, stored privately and opened only through short-lived links; administrator access to documents is logged.
+- Administrators need two-factor login, enforced in the database as well as the app; spam-prone actions are rate limited per person.
 - Money rules are enforced in the database; only the server can confirm a payment or record a payout, and the service-role key is confined to one server-only file.
 - Dependencies audited, SBOM generated and secrets scanned in CI.
 - Personal information is handled under POPIA; breaches will be reported to the Information Regulator and affected users as required.
