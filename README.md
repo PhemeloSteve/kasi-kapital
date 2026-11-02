@@ -1,4 +1,5 @@
 # Kasi Kapital
+![CI](https://github.com/PhemeloSteve/kasi-kapital/actions/workflows/ci.yml/badge.svg)
 
 > Community funding for South Africa's small businesses. Young founders build a verified track record; neighbours, donors and companies discover, back and follow them.
 
