@@ -1,82 +1,119 @@
 # Kasi Kapital
+
 ![CI](https://github.com/PhemeloSteve/kasi-kapital/actions/workflows/ci.yml/badge.svg)
+[![MIT License](https://img.shields.io/badge/licence-MIT-green.svg)](LICENSE)
 
-> Community funding for South Africa's small businesses. Young founders build a verified track record; neighbours, donors and companies discover, back and follow them.
+> **Your kasi, your capital.** Community funding for South Africa's small businesses. Young founders build a verified track record; neighbours, donors and companies discover, back and follow them.
 
-Built for the **FNB 2026 Hackathon**, theme: _Youth entrepreneurship and small-business growth_.
+Built for the **FNB 2026 Hackathon** — theme: _Youth entrepreneurship and small-business growth_. Solo build.
+
+---
 
 ## The problem
 
-South Africa has some of the highest youth unemployment in the world, and starting a business is one of the few real ways out. Young founders, especially in townships and rural areas, usually have no collateral, no credit history and no way for their community to see their work. People who would gladly back a local business cannot tell the genuine ones from the scams.
+South Africa has a **47.4% youth unemployment rate** (Stats SA, Q2 2026) and an estimated **R350 billion SME funding gap**. Starting a business is one of the few real ways out, but young founders in townships and rural areas have no collateral, no credit history, and no way for their community to see their work. People who would gladly back a local business cannot tell the genuine ones from the scams.
 
 ## The idea
 
-Inspired by a community-funded local bakery, Kasi Kapital brings the stokvel spirit of pooling resources to a trusted digital platform.
+Inspired by the stokvel tradition of pooling resources, Kasi Kapital brings that community trust to a verified digital platform.
 
-- **Entrepreneurs** create a business profile, state a funding goal (chickens, an oven, stock) and keep a living record of progress.
-- **Individuals and corporate donors** discover businesses nearby or by type, review the track record and fund a goal.
-- **Funds are released against proof** (for example a supplier invoice), not up front.
-- **Businesses collaborate** through bulk buying and stock swaps (roadmap).
+- **Founders** create a business profile, state a funding goal (chickens, an oven, stock) and upload proof of spending at each milestone.
+- **Supporters** (individuals, investors and corporate donors) discover verified businesses nearby or by category, review their track record and fund a goal.
+- **Money is released against proof** — an invoice or quote checked by an administrator — not up front. A later milestone never gets paid before an earlier one.
+- **Every business is checked** before it appears to supporters: identity, bank statement and company registration.
+
+---
+
+## Screenshots
+
+| Sign in                             | Supporter dashboard                          | Founder dashboard                               |
+| ----------------------------------- | -------------------------------------------- | ----------------------------------------------- |
+| Green panel + cream card, your logo | Stat cards, business grid with progress bars | Active goal, milestone rows, verification panel |
+
+---
 
 ## Account types
 
-| Role       | What they can do                                                    |
-| ---------- | ------------------------------------------------------------------- |
-| `business` | Create and verify a business, set goals, upload proof, post updates |
-| `investor` | Browse, verify identity, contribute to goals                        |
-| `donor`    | Corporate or individual donations, impact reporting                 |
-| `admin`    | Review verification, handle reports, view the audit log             |
+| Role       | What they can do                                                     |
+| ---------- | -------------------------------------------------------------------- |
+| `business` | Create and verify a business, set goals, upload milestone proof      |
+| `investor` | Browse verified businesses, contribute to goals, track contributions |
+| `donor`    | Corporate or individual donations, nothing expected back             |
+| `admin`    | Review documents and proof, approve payouts, manage the audit log    |
 
 ## Funding types (phased by legal risk)
 
-1. **Donations** (no return expected)
-2. **Rewards / community pre-sales** (vouchers, future goods)
-3. **Equity or revenue-share** through a licensed partner (roadmap, see [Legal notes](#legal-notes))
+1. **Donations** — nothing expected back
+2. **Community pre-sales** — supporters get goods or vouchers
+3. **Equity or revenue-share** through a licensed partner — roadmap only, see [Legal notes](#legal-notes)
+
+---
 
 ## Tech stack
 
-| Layer      | Technology                                                                         |
-| ---------- | ---------------------------------------------------------------------------------- |
-| Frontend   | Next.js 15 (App Router), React, TypeScript, PWA                                    |
-| UI         | Tailwind CSS                                                                       |
-| Maps       | Leaflet + OpenStreetMap                                                            |
-| Backend    | Supabase (PostgreSQL, Auth, Storage, Row Level Security)                           |
-| Geo search | PostGIS                                                                            |
-| Validation | Zod 4                                                                              |
-| Testing    | Vitest                                                                             |
-| CI         | GitHub Actions                                                                     |
-| Hosting    | Vercel or a South African cloud region (AWS af-south-1 / Azure South Africa North) |
+| Layer      | Technology                                                              |
+| ---------- | ----------------------------------------------------------------------- |
+| Frontend   | Next.js 15 (App Router), React, TypeScript, PWA                         |
+| UI         | Tailwind CSS, custom green/cream design system                          |
+| Maps       | Leaflet + OpenStreetMap                                                 |
+| Backend    | Supabase (PostgreSQL, Auth, Storage, Row Level Security)                |
+| Geo search | PostGIS                                                                 |
+| Validation | Zod 4                                                                   |
+| Testing    | Vitest (297 unit tests, 111 database checks)                            |
+| CI         | GitHub Actions (lint, typecheck, tests, build, audit, CodeQL, DB tests) |
+| Hosting    | Vercel + Supabase                                                       |
 
-External providers for identity verification, open banking and payments are **sandbox or mock implementations** behind swappable interfaces in `src/lib/providers/`. Nothing in this repository moves real money.
+Payment providers, identity verification and open banking are **mock implementations** behind swappable interfaces. Nothing in this repository moves real money.
+
+---
 
 ## Getting started
 
 ### Prerequisites
 
 - Node.js 22.12+
-- A Supabase project (or the Supabase CLI for local development)
+- A Supabase project (free tier works)
 
 ### Setup
 
 ```bash
-git clone <your-repo-url> kasi-kapital
+git clone https://github.com/PhemeloSteve/kasi-kapital.git
 cd kasi-kapital
 npm install
-cp .env.example .env.local     # then fill in the values
+cp .env.example .env.local   # fill in your values
 ```
 
-### Database
+### Environment variables
 
-Apply the schema in `supabase/migrations/0001_init.sql` using the Supabase SQL editor or the CLI:
+| Variable                        | Where to find it                             | Required            |
+| ------------------------------- | -------------------------------------------- | ------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase → Project Settings → API            | Yes                 |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Project Settings → API            | Yes                 |
+| `NEXT_PUBLIC_APP_URL`           | Your deployed URL or `http://localhost:3000` | Yes                 |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Supabase → Project Settings → API            | Yes (demo payments) |
+| `PAYMENT_PROVIDER`              | Set to `mock`                                | Yes                 |
+| `ALLOW_DEMO_KYC`                | Set to `true` for demos only                 | Optional            |
+
+Never commit `.env.local`. The `SUPABASE_SERVICE_ROLE_KEY` is server-only and must never reach the browser.
+
+### Database
 
 ```bash
 npx supabase link --project-ref <your-project-ref>
 npx supabase db push
 ```
 
-Create two **private** storage buckets: `business-documents` and `identity-documents`.
+Create two **private** storage buckets in the Supabase dashboard: `business-documents` and `identity-documents`.
 
-### Database tests (optional, needs a local PostgreSQL with PostGIS)
+### Run
+
+```bash
+npm run dev        # http://localhost:3000
+npm run check      # lint + typecheck + format + tests
+npm run build
+```
+
+### Database tests (needs local PostgreSQL with PostGIS)
 
 ```bash
 PGHOST=localhost PGUSER=postgres ./supabase/tests/run_tests.sh
@@ -84,129 +121,129 @@ PGHOST=localhost PGUSER=postgres ./supabase/tests/run_tests.sh
 
 Each test file runs on its own throwaway database. Your Supabase project is never touched.
 
-### Run
-
-```bash
-npm run dev        # http://localhost:3000
-npm run lint
-npm run typecheck
-npm test
-npm run build
-```
+---
 
 ## Supabase dashboard setup (one-off)
 
-1. **Authentication → Sign In / Providers → Email:** while developing, switch **Confirm email** off so test accounts can log in immediately. **Switch it back on before real users sign up.**
-2. **Authentication → URL Configuration:** set **Site URL** to `http://localhost:3000` and add `http://localhost:3000/auth/callback` under **Redirect URLs** (add your deployed URL too when you deploy).
-3. **Storage:** create the private buckets `business-documents` and `identity-documents`.
-4. **First admin:** admins can never be created through sign-up. Sign up normally, then in the **SQL Editor** run:
+1. **Authentication → Email:** turn off **Confirm email** while developing. Turn it back on before real users sign up.
+2. **Authentication → URL Configuration:** set Site URL to `http://localhost:3000`, add `http://localhost:3000/auth/callback` to Redirect URLs.
+3. **Authentication → Multi-Factor:** make sure TOTP is enabled (required for admin accounts).
+4. **Storage:** create private buckets `business-documents` and `identity-documents`.
+5. **First admin:** sign up normally, then in the SQL Editor:
 
 ```sql
 update public.profiles set role = 'admin'
 where id = (select id from auth.users where email = 'you@example.com');
 ```
 
+---
+
 ## Administrator two-factor login
 
-Administrators must use an authenticator app. After logging in, `/admin` sends you to a setup page the first time (scan the QR code, then enter the 6-digit code) and asks for a code on every later login. Without it, administrator powers do not work at all: the database itself refuses them, so a stolen password is not enough.
+Admins must complete an authenticator app setup before they can use any admin powers. The database enforces this — a stolen password alone gives nothing.
 
-- **Set it up first.** Right after promoting your account to admin, log in and complete the setup straight away. Until a second factor exists, anyone with your password could enroll their own.
-- **Check the project setting:** in the Supabase dashboard, Authentication, Multi-Factor, make sure TOTP is enabled (it normally is).
-- **Lost your phone?** Another administrator cannot reset it. As the project owner, run this in the SQL Editor, then set up a new authenticator at your next login:
+- Set it up immediately after promoting an account to admin.
+- **Lost your phone?** Run this in the SQL Editor, then set up a new authenticator at next login:
 
 ```sql
 delete from auth.mfa_factors
 where user_id = (select id from auth.users where email = 'you@example.com');
 ```
 
+---
+
 ## Payments in this build
 
-Payments are **simulated**. Supporters pay through a demo checkout and no real money moves. To make the demo checkout work, add your project's service-role key to `.env.local` as `SUPABASE_SERVICE_ROLE_KEY` (Supabase dashboard, Project Settings, API). It is a powerful secret: keep it on the server only and never commit it. `PAYMENT_PROVIDER=mock` selects the demo provider. Setting `ALLOW_DEMO_KYC=true` lets supporters verify themselves with one click for demos; leave it `false` in production.
+Payments are **simulated**. No real money moves. The demo checkout calls a mock provider that confirms instantly. To enable it, add `SUPABASE_SERVICE_ROLE_KEY`, `PAYMENT_PROVIDER=mock` and `ALLOW_DEMO_KYC=true` to `.env.local`. Remove `ALLOW_DEMO_KYC` before going to production.
 
-## Environment variables
-
-See `.env.example`. Never commit `.env.local`. The `SUPABASE_SERVICE_ROLE_KEY` must only be used in server code and must never be exposed to the browser.
+---
 
 ## Security design
 
-- Row Level Security enabled on every table; the browser only ever uses the anon key.
-- Roles are enforced in the database, and users cannot change their own role or verification status.
-- Private documents (ID, bank statements) are stored in private buckets and served by short-lived signed URLs.
-- MFA required for admin accounts.
-- Strict security headers and a Content Security Policy (`next.config.mjs`).
-- Input validation with Zod on every server action and API route.
-- Audit log for verification decisions and money-related actions.
-- No off-platform payments: only the platform moves funds, and funds are released on verified milestones.
+- Row Level Security on every table; the browser only ever uses the anon key.
+- Roles, verification status and money rules are enforced in the database — not just the app.
+- Admin powers require two-factor login, enforced in the database as well as the UI.
+- Private documents served through 60-second signed URLs; every admin view is audit-logged.
+- Per-person rate limits on contributions, uploads and proof submissions.
+- Open checkouts capped at 5 per supporter; expired ones stop counting.
+- Strict security headers and a Content Security Policy in `next.config.mjs`.
+- Locations rounded to ~1 km before storage; never a home address.
+- `npm audit` gate, CycloneDX SBOM, Dependabot, gitleaks and CodeQL in CI.
 
-### Protecting businesses from bad actors
-
-- Locations are shown at suburb or ward level only, never a home address.
-- No public phone numbers or personal contact details; all contact is in-app.
-- Users can block and report; admins can suspend accounts.
-- New investors have contribution limits until verified.
+---
 
 ## POPIA compliance
 
-- Collect only what is needed for the stated purpose (data minimisation).
-- Explicit consent captured at sign-up and before document upload.
+- Data minimisation: only what is needed for each purpose.
+- Explicit consent at sign-up and before document upload, timestamped by the database.
+- Short-lived signed URLs for private documents; every admin access is logged.
 - Retention and deletion rules for identity and banking documents.
-- A designated Information Officer and a published privacy policy are required before launch.
-- Breach-notification process for the Information Regulator and affected users.
+- A designated Information Officer and published privacy policy are required before launch.
 - Prefer South African hosting regions; cross-border transfers must meet POPIA section 72.
+
+---
 
 ## Legal notes
 
-This is a design summary, **not legal advice**. Before going live, get a corporate attorney to confirm:
+Not legal advice. Before going live:
 
-- Only a CIPC-registered company can issue shares. Offering shares to the public triggers the Companies Act prospectus rules, with a small-offer exemption (up to 50 people, R1 million, six months, not repeated within 12 months).
-- Platforms that arrange equity, lending or pool funds may fall under FAIS, the Financial Markets Act, the National Credit Act or the Banks Act. The platform should never hold investor money directly; use a licensed payment provider or an attorney's trust account.
-- FICA and KYC obligations for verifying users.
+- Equity offerings trigger the Companies Act prospectus rules. Small-offer exemption: up to 50 people, R1 million, 6 months.
+- Platforms that pool or move funds may fall under FAIS, the Financial Markets Act, the National Credit Act or the Banks Act. Never hold investor money directly — use a licensed payment provider.
+- FICA and KYC obligations apply for identity verification.
 
-## Architecture and engineering practices
+---
 
-The code follows a layered architecture (domain, application, infrastructure, presentation) with ports and adapters, and the dependency direction is enforced by ESLint. See [ARCHITECTURE.md](ARCHITECTURE.md) and the decision records in `docs/adr/`.
+## Architecture
+
+Layered architecture (domain → application → infrastructure → UI) with ports and adapters. The dependency direction is enforced by ESLint. See [ARCHITECTURE.md](ARCHITECTURE.md) and `docs/adr/`.
 
 ```
-kasi-kapital/
-  src/
-    domain/              # pure business rules (no framework imports)
-    application/         # use cases + ports (interfaces)
-    infrastructure/      # Supabase, KYC, banking, payment adapters
-    config/              # Zod-validated environment
-    app/, components/    # Next.js UI (thin)
-  supabase/migrations/   # SQL schema + RLS
-  docs/adr/              # architecture decision records
-  .github/               # CI, CodeQL, Dependabot, CODEOWNERS, PR template
+src/
+  domain/          # pure business rules, no framework imports
+  application/     # use cases + ports (interfaces)
+  infrastructure/  # Supabase, payment, KYC, banking adapters
+  config/          # Zod-validated environment variables
+  app/             # Next.js App Router pages and server actions
+  components/      # UI components
+supabase/
+  migrations/      # 8 migrations (schema, RLS, functions, triggers)
+  tests/           # 111 SQL checks across 6 test files
+.github/
+  workflows/       # CI: quality, security, database
 ```
 
-| Practice                    | How it is applied                                                                                  |
-| --------------------------- | -------------------------------------------------------------------------------------------------- |
-| DRY / KISS / YAGNI          | One rule per concern in `domain`; equity contributions rejected until a licensed partner exists    |
-| Version control and reviews | Git, small PRs, PR template, CODEOWNERS, Conventional Commits ([CONTRIBUTING.md](CONTRIBUTING.md)) |
-| Naming and style            | ESLint, Prettier, EditorConfig, strict TypeScript                                                  |
-| Automated testing           | Vitest unit and use-case tests with a 90% coverage gate; integration and e2e tests planned         |
-| CI/CD                       | GitHub Actions: lint, typecheck, format, test, build                                               |
-| Supply chain security       | `npm audit`, CycloneDX SBOM artifact, Dependabot, gitleaks secret scan, CodeQL                     |
+| Practice           | How it is applied                                                                 |
+| ------------------ | --------------------------------------------------------------------------------- |
+| DRY / KISS / YAGNI | One rule per concern in `domain`; equity disabled until a licensed partner exists |
+| Testing            | 297 Vitest unit tests (98%+ coverage) + 111 database checks in CI                 |
+| Security           | RLS, MFA, rate limits, signed URLs, audit log, secret scanning                    |
+| CI/CD              | GitHub Actions: lint, typecheck, format, test, build, audit, CodeQL, DB tests     |
+| Supply chain       | `npm audit`, CycloneDX SBOM, Dependabot, gitleaks                                 |
 
-Run everything locally with `npm run check`. Report vulnerabilities as described in [SECURITY.md](SECURITY.md).
+---
 
 ## Roadmap
 
-- [x] Auth, roles and consent (sign-up, login, per-role landing pages, POPIA consent)
-- [x] Business profiles (category, suburb, approximate location, social links)
+- [x] Auth, roles and POPIA consent
+- [x] Business profiles with approximate map location
 - [x] Document upload, admin verification queue and trust levels
-- [x] Discovery: search, category filter, "near me" with a map, and a business detail page
-- [x] Funding goals with milestones (created, protected and locked once funded)
-- [x] Contributions, demo checkout, milestone proof, admin approval and payouts (simulated payment provider)
-- [x] Investor and donor views (discovery, business pages, my contributions)
-- [ ] Supply circles: bulk buying and stock swaps
-- [ ] YouTube, Facebook and LinkedIn link-outs
-- [x] Admin two-factor login, per-person rate limits, and an unpaid-checkout cap
-- [x] Full UI redesign — green/cream palette, your logo, responsive layout for every screen
-- [x] Database tests run in CI
+- [x] Discovery: search, category filter, near me with a map
+- [x] Funding goals with milestones (locked once funded)
+- [x] Contributions, demo checkout, milestone proof, admin approval and payouts
+- [x] Supporter dashboard with stat cards and business grid
+- [x] Founder dashboard with goal card, milestone rows and verification panel
+- [x] Admin two-factor login (enforced in the database)
+- [x] Per-person rate limits and unpaid-checkout cap
+- [x] Full UI — green/cream design, your logo, responsive on mobile and desktop
+- [x] Database tests in CI
+- [ ] Deploy to Vercel
+- [ ] Seed data for the demo
 - [ ] Live KYC, open-banking and payment providers
+- [ ] Supply circles: bulk buying and stock swaps
 - [ ] Licensed equity / revenue-share partnership
+
+---
 
 ## Licence
 
-TBD
+[MIT](LICENSE) © 2026 PhemeloSteve
