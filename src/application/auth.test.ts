@@ -14,7 +14,8 @@ const valid = {
 function makeAuth(overrides: Partial<AuthGateway> = {}): AuthGateway {
   return {
     signUp: async () => ok({ hasSession: true }),
-    signIn: async () => ok({ userId: "u1", role: "investor", fullName: "T", consented: true }),
+    signIn: async () =>
+      ok({ userId: "u1", role: "investor", fullName: "T", consented: true, adminLevel: null }),
     signOut: async () => {},
     getCurrentUser: async () => null,
     acceptConsent: async () => ok(true as const),
@@ -103,20 +104,38 @@ describe("logIn", () => {
     ["donor", "/donor"],
     ["admin", "/admin"],
   ] as const)("sends a %s to %s", async (role, path) => {
-    const user: CurrentUser = { userId: "u", role, fullName: null, consented: true };
+    const user: CurrentUser = {
+      userId: "u",
+      role,
+      fullName: null,
+      consented: true,
+      adminLevel: null,
+    };
     const result = await logIn({ auth: makeAuth({ signIn: async () => ok(user) }) }, creds);
     expect(result).toEqual({ ok: true, value: { landingPath: path } });
   });
 
   it("sends users without consent to the consent page first", async () => {
-    const user: CurrentUser = { userId: "u", role: "donor", fullName: null, consented: false };
+    const user: CurrentUser = {
+      userId: "u",
+      role: "donor",
+      fullName: null,
+      consented: false,
+      adminLevel: null,
+    };
     const result = await logIn({ auth: makeAuth({ signIn: async () => ok(user) }) }, creds);
     expect(result).toEqual({ ok: true, value: { landingPath: "/consent" } });
   });
 
   it("passes the Keep me logged in choice to the sign-in, off by default", async () => {
     const signIn = vi.fn(async () =>
-      ok({ userId: "u", role: "donor" as const, fullName: null, consented: true }),
+      ok({
+        userId: "u",
+        role: "donor" as const,
+        fullName: null,
+        consented: true,
+        adminLevel: null,
+      }),
     );
     await logIn({ auth: makeAuth({ signIn }) }, creds);
     expect(signIn).toHaveBeenLastCalledWith({

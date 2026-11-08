@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { reviewDocument } from "@/application/documents";
 import { processPayouts } from "@/application/funding";
 import { reviewMilestone } from "@/application/milestones";
-import { requireUser } from "@/app/_lib/guard";
+import { requireSuperAdmin, requireUser } from "@/app/_lib/guard";
 import { getPaymentGateway } from "@/infrastructure/providers";
 import { createDocumentStore } from "@/infrastructure/supabase/document-store";
 import { createMilestoneStore } from "@/infrastructure/supabase/milestone-store";
@@ -35,7 +35,7 @@ export async function reviewDocumentAction(formData: FormData): Promise<void> {
 }
 
 export async function reviewMilestoneAction(formData: FormData): Promise<void> {
-  await requireUser(["admin"]);
+  const user = await requireUser(["admin"]);
 
   const result = await reviewMilestone(
     { milestones: createMilestoneStore() },
@@ -48,8 +48,10 @@ export async function reviewMilestoneAction(formData: FormData): Promise<void> {
   if (!result.ok) redirect(`/admin?error=${result.error}`);
   if (!result.value.approved) redirect("/admin?notice=proof_rejected");
 
-  // Approval may have released money: pay it out straight away.
+  // Approval may have released money: pay it out straight away, but only for a super admin.
+  // A reviewer's approval leaves the payout waiting for one.
   if (!result.value.payoutCreated) redirect("/admin?notice=proof_approved_waiting");
+  if (user.adminLevel !== "super_admin") redirect("/admin?notice=proof_approved_payout_pending");
   const paid = await processPayouts({
     gateway: getPaymentGateway(),
     server: createPaymentServer(),
@@ -62,7 +64,9 @@ export async function reviewMilestoneAction(formData: FormData): Promise<void> {
 }
 
 export async function processPayoutsAction(): Promise<void> {
-  await requireUser(["admin"]);
+  // Payouts go through the service role, which the database cannot restrict by admin level, so this
+  // check is the only thing between a reviewer and a payout.
+  await requireSuperAdmin();
   const result = await processPayouts({
     gateway: getPaymentGateway(),
     server: createPaymentServer(),

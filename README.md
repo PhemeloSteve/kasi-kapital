@@ -34,12 +34,12 @@ Inspired by the stokvel tradition of pooling resources, Kasi Kapital brings that
 
 ## Account types
 
-| Role       | What they can do                                                     |
-| ---------- | -------------------------------------------------------------------- |
-| `business` | Create and verify a business, set goals, upload milestone proof      |
-| `investor` | Browse verified businesses, contribute to goals, track contributions |
-| `donor`    | Corporate or individual donations, nothing expected back             |
-| `admin`    | Review documents and proof, approve payouts, manage the audit log    |
+| Role       | What they can do                                                                                          |
+| ---------- | --------------------------------------------------------------------------------------------------------- |
+| `business` | Create and verify a business, set goals, upload milestone proof                                           |
+| `investor` | Browse verified businesses, contribute to goals, track contributions                                      |
+| `donor`    | Corporate or individual donations, nothing expected back                                                  |
+| `admin`    | Review documents and proof. Super admins also pay out, read the audit log and manage businesses and users |
 
 ## Funding types (phased by legal risk)
 
@@ -59,7 +59,7 @@ Inspired by the stokvel tradition of pooling resources, Kasi Kapital brings that
 | Backend    | Supabase (PostgreSQL, Auth, Storage, Row Level Security)                |
 | Geo search | PostGIS                                                                 |
 | Validation | Zod 4                                                                   |
-| Testing    | Vitest (297 unit tests, 111 database checks)                            |
+| Testing    | Vitest unit tests and SQL database checks                               |
 | CI         | GitHub Actions (lint, typecheck, tests, build, audit, CodeQL, DB tests) |
 | Hosting    | Vercel + Supabase                                                       |
 
@@ -85,14 +85,18 @@ cp .env.example .env.local   # fill in your values
 
 ### Environment variables
 
-| Variable                        | Where to find it                             | Required            |
-| ------------------------------- | -------------------------------------------- | ------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase → Project Settings → API            | Yes                 |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Project Settings → API            | Yes                 |
-| `NEXT_PUBLIC_APP_URL`           | Your deployed URL or `http://localhost:3000` | Yes                 |
-| `SUPABASE_SERVICE_ROLE_KEY`     | Supabase → Project Settings → API            | Yes (demo payments) |
-| `PAYMENT_PROVIDER`              | Set to `mock`                                | Yes                 |
-| `ALLOW_DEMO_KYC`                | Set to `true` for demos only                 | Optional            |
+| Variable                        | Where to find it                                                           | Required            |
+| ------------------------------- | -------------------------------------------------------------------------- | ------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase → Project Settings → API                                          | Yes                 |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Project Settings → API                                          | Yes                 |
+| `NEXT_PUBLIC_APP_URL`           | Your deployed URL or `http://localhost:3000`                               | Yes                 |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Supabase → Project Settings → API                                          | Yes (demo payments) |
+| `PAYMENT_PROVIDER`              | Set to `mock`                                                              | Yes                 |
+| `ALLOW_MOCK_PAYMENTS`           | `true` on demo sites only; production refuses the mock provider without it | Optional            |
+| `ALLOW_DEMO_KYC`                | Set to `true` for demos only                                               | Optional            |
+| `WEBHOOK_SECRET`                | A random value of 16+ characters you choose                                | For admin emails    |
+| `RESEND_API_KEY`                | resend.com → API Keys                                                      | For admin emails    |
+| `ADMIN_NOTIFY_EMAIL`            | The address that receives admin alerts                                     | For admin emails    |
 
 Never commit `.env.local`. The `SUPABASE_SERVICE_ROLE_KEY` is server-only and must never reach the browser.
 
@@ -132,9 +136,11 @@ Each test file runs on its own throwaway database. Your Supabase project is neve
 5. **First admin:** sign up normally, then in the SQL Editor:
 
 ```sql
-update public.profiles set role = 'admin'
+update public.profiles set role = 'admin', admin_level = 'super_admin'
 where id = (select id from auth.users where email = 'you@example.com');
 ```
+
+Admins have one of two levels. A `reviewer` can review documents and proof. A `super_admin` can also pay out, read the audit log and suspend businesses. An admin with no level recorded counts as a reviewer. Only a super admin, or the SQL Editor, can change a level.
 
 ---
 
@@ -152,9 +158,22 @@ where user_id = (select id from auth.users where email = 'you@example.com');
 
 ---
 
+## Admin email notifications
+
+When a business is submitted for verification or milestone proof arrives, `/api/webhooks/admin-notify` emails the administrator through Resend. It refuses every call until `WEBHOOK_SECRET` is set.
+
+1. Add `WEBHOOK_SECRET`, `RESEND_API_KEY` and `ADMIN_NOTIFY_EMAIL` to your hosting settings.
+2. In Supabase, go to Database → Webhooks and create two webhooks that `POST` to `https://<your-app>/api/webhooks/admin-notify` with the header `Authorization: Bearer <WEBHOOK_SECRET>`: one for table `businesses` (event `UPDATE`) and one for table `milestones` (event `UPDATE`).
+
+The route ignores every change except a business becoming `pending` and a milestone becoming `proof_submitted`. More detail is in `docs/admin-improvements/`.
+
+---
+
 ## Payments in this build
 
-Payments are **simulated**. No real money moves. The demo checkout calls a mock provider that confirms instantly. To enable it, add `SUPABASE_SERVICE_ROLE_KEY`, `PAYMENT_PROVIDER=mock` and `ALLOW_DEMO_KYC=true` to `.env.local`. Remove `ALLOW_DEMO_KYC` before going to production.
+Payments are **simulated**. No real money moves. The demo checkout calls a mock provider that confirms instantly. To enable it locally, add `SUPABASE_SERVICE_ROLE_KEY`, `PAYMENT_PROVIDER=mock` and `ALLOW_DEMO_KYC=true` to `.env.local`.
+
+A production server refuses the mock provider unless `ALLOW_MOCK_PAYMENTS=true` is also set, so forgetting to configure a real provider switches payments off instead of letting anyone pay with pretend money. Set it only on a demo site, and remove `ALLOW_DEMO_KYC` before going to production.
 
 ---
 
@@ -163,6 +182,10 @@ Payments are **simulated**. No real money moves. The demo checkout calls a mock 
 - Row Level Security on every table; the browser only ever uses the anon key.
 - Roles, verification status and money rules are enforced in the database — not just the app.
 - Admin powers require two-factor login, enforced in the database as well as the UI.
+- Two admin levels: reviewers handle documents and proof; only super admins can pay out, read the audit log, and suspend businesses or list users. Nobody can promote themselves.
+- Every suspension, reinstatement and admin document view is written to the audit log.
+- The demo payment provider is refused in production unless explicitly allowed.
+- The admin webhook checks a shared secret and refuses all calls when none is set.
 - Private documents served through 60-second signed URLs; every admin view is audit-logged.
 - Per-person rate limits on contributions, uploads and proof submissions.
 - Open checkouts capped at 5 per supporter; expired ones stop counting.
@@ -206,8 +229,8 @@ src/
   app/             # Next.js App Router pages and server actions
   components/      # UI components
 supabase/
-  migrations/      # 8 migrations (schema, RLS, functions, triggers)
-  tests/           # 111 SQL checks across 6 test files
+  migrations/      # 9 migrations (schema, RLS, functions, triggers)
+  tests/           # SQL checks across 7 test files
 .github/
   workflows/       # CI: quality, security, database
 ```
@@ -215,7 +238,7 @@ supabase/
 | Practice           | How it is applied                                                                 |
 | ------------------ | --------------------------------------------------------------------------------- |
 | DRY / KISS / YAGNI | One rule per concern in `domain`; equity disabled until a licensed partner exists |
-| Testing            | 297 Vitest unit tests (98%+ coverage) + 111 database checks in CI                 |
+| Testing            | Vitest unit tests (with coverage) + SQL database checks in CI                     |
 | Security           | RLS, MFA, rate limits, signed URLs, audit log, secret scanning                    |
 | CI/CD              | GitHub Actions: lint, typecheck, format, test, build, audit, CodeQL, DB tests     |
 | Supply chain       | `npm audit`, CycloneDX SBOM, Dependabot, gitleaks                                 |
@@ -236,6 +259,9 @@ supabase/
 - [x] Per-person rate limits and unpaid-checkout cap
 - [x] Full UI — green/cream design, your logo, responsive on mobile and desktop
 - [x] Database tests in CI
+- [x] Admin levels, audit log page, business suspension, user list and platform stats
+- [x] Admin email notifications through a secured webhook
+- [ ] Production hardening: secure cookies, CSP nonces, login CAPTCHA
 - [ ] Deploy to Vercel
 - [ ] Seed data for the demo
 - [ ] Live KYC, open-banking and payment providers

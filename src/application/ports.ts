@@ -1,6 +1,6 @@
 // Ports: what the application needs from the outside world. Infrastructure implements them.
 import type { Result } from "@/domain/result";
-import type { SignupRole, UserRole } from "@/domain/roles";
+import type { AdminLevel, SignupRole, UserRole } from "@/domain/roles";
 import type { BusinessCategory } from "@/domain/business-categories";
 import type { DocumentStatus, TrustTier } from "@/domain/documents";
 import type { MilestoneStatus, VerificationStatus } from "@/domain/types";
@@ -40,6 +40,8 @@ export type CurrentUser = {
   role: UserRole;
   fullName: string | null;
   consented: boolean;
+  /** Only administrators have one. An administrator with none recorded is a reviewer. */
+  adminLevel: AdminLevel | null;
 };
 
 export interface AuthGateway {
@@ -326,4 +328,72 @@ export type RateLimitedAction = "contribute" | "upload" | "proof";
 /** Counts one attempt by the signed-in person. The limits themselves live in the database. */
 export interface RateLimiter {
   allow(action: RateLimitedAction): Promise<boolean>;
+}
+
+// ---------- Administration ----------
+export type AuditEntry = {
+  id: string;
+  createdAt: string;
+  action: string;
+  entity: string;
+  entityId: string;
+  actorName: string | null;
+  details: Record<string, unknown>;
+};
+
+export type AuditFilters = {
+  action: string | null;
+  entity: string | null;
+  page: number;
+};
+
+/** Super administrators only (the database refuses everyone else). */
+export interface AuditStore {
+  list(filters: AuditFilters): Promise<{ items: AuditEntry[]; hasMore: boolean }>;
+}
+
+export type AdminBusinessRow = {
+  id: string;
+  name: string;
+  ownerName: string | null;
+  verification: VerificationStatus;
+  trustTier: TrustTier;
+  goalCount: number;
+};
+
+export type AdminUserRow = {
+  id: string;
+  fullName: string | null;
+  email: string | null;
+  role: UserRole;
+  kycStatus: VerificationStatus;
+  contributedCents: number;
+};
+
+export type PlatformStats = {
+  totalBusinesses: number;
+  verifiedBusinesses: number;
+  pendingBusinesses: number;
+  openGoals: number;
+  heldCents: number;
+  paidOutCents: number;
+};
+
+/** Read-only lists and totals for the admin screens. */
+export interface AdminDirectory {
+  listBusinesses(): Promise<AdminBusinessRow[]>;
+  /** Super administrators only. */
+  listUsers(): Promise<AdminUserRow[]>;
+  /** Null when the totals could not be loaded. */
+  platformStats(): Promise<PlatformStats | null>;
+}
+
+export interface BusinessModeration {
+  suspend(input: {
+    businessId: string;
+    reason: string;
+  }): Promise<Result<true, "not_allowed" | "reason_required" | "not_found" | "failed">>;
+  unsuspend(
+    businessId: string,
+  ): Promise<Result<true, "not_allowed" | "not_suspended" | "not_found" | "failed">>;
 }

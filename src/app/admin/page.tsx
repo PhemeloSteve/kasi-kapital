@@ -1,15 +1,32 @@
+import { Building2, HandCoins, Lock, ShieldCheck } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
+import { StatCard } from "@/components/ui/StatCard";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import { requireUser } from "@/app/_lib/guard";
 import { categoryLabels, isBusinessCategory } from "@/domain/business-categories";
 import { documentInfo, isUploadableType, trustTierLabels } from "@/domain/documents";
 import { formatRand } from "@/domain/money";
-import { createDocumentStore } from "@/infrastructure/supabase/document-store";
+import { createAdminDirectory } from "@/infrastructure/supabase/admin-store";
 import { createMilestoneStore } from "@/infrastructure/supabase/milestone-store";
 import type { ReviewQueueItem } from "@/application/ports";
 import { processPayoutsAction, reviewDocumentAction, reviewMilestoneAction } from "./actions";
+import { getProofQueue, getReviewQueue } from "./_queues";
 
-export const metadata = { title: "Admin | Kasi Kapital" };
+/** The browser tab shows how many items are waiting, e.g. "Review queue (3) | Kasi Kapital". */
+export async function generateMetadata() {
+  // The page does its own sign-in and role checks. This only needs the counts, and the database
+  // returns empty lists to anyone who is not a fully signed-in administrator.
+  let total = 0;
+  try {
+    const [proofs, docs] = await Promise.all([getProofQueue(), getReviewQueue()]);
+    total = proofs.length + docs.length;
+  } catch {
+    // A failed count must never break the page; fall back to the plain title.
+  }
+  return {
+    title: total > 0 ? `Review queue (${total}) | Kasi Kapital` : "Review queue | Kasi Kapital",
+  };
+}
 
 const notices: Record<string, string> = {
   approved: "Document approved.",
@@ -18,6 +35,8 @@ const notices: Record<string, string> = {
   proof_approved_paid: "Proof approved and the money for that milestone was paid out.",
   proof_approved_waiting:
     "Proof approved. The goal hasn't raised enough yet, so the payout will be created automatically when more money arrives.",
+  proof_approved_payout_pending:
+    "Proof approved. The payout is waiting for a super admin to release it.",
   proof_approved_payout_failed:
     "Proof approved, but the payout did not go through. It is waiting below; use “Pay out now” to retry.",
 };
@@ -63,10 +82,12 @@ export default async function AdminPage({
   const user = await requireUser(["admin"]);
   const { notice, error, paid, failed } = await searchParams;
   const milestones = createMilestoneStore();
-  const [queue, proofs, payouts] = await Promise.all([
-    createDocumentStore().listReviewQueue(),
-    milestones.listProofQueue(),
+  const isSuperAdmin = user.adminLevel === "super_admin";
+  const [queue, proofs, payouts, stats] = await Promise.all([
+    getReviewQueue(),
+    getProofQueue(),
     milestones.listPendingPayouts(),
+    createAdminDirectory().platformStats(),
   ]);
   const groups = groupByBusiness(queue);
 
@@ -76,6 +97,7 @@ export default async function AdminPage({
   return (
     <DashboardShell
       role="admin"
+      adminLevel={user.adminLevel}
       name={user.fullName}
       title="Review queue"
       subtitle="Check documents and proof before any money moves."
@@ -89,6 +111,32 @@ export default async function AdminPage({
         <p role="alert" className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-800">
           {errors[error]}
         </p>
+      )}
+      {stats && (
+        <section
+          aria-label="Platform at a glance"
+          className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+        >
+          <StatCard
+            label="Businesses"
+            value={stats.totalBusinesses}
+            Icon={Building2}
+            note={`${stats.pendingBusinesses} under review`}
+          />
+          <StatCard
+            label="Verified businesses"
+            value={stats.verifiedBusinesses}
+            Icon={ShieldCheck}
+          />
+          <StatCard label="Open goals" value={stats.openGoals} Icon={HandCoins} tone="amber" />
+          <StatCard
+            label="Held in escrow"
+            value={formatRand(stats.heldCents)}
+            Icon={Lock}
+            tone="slate"
+            note={`${formatRand(stats.paidOutCents)} paid out so far`}
+          />
+        </section>
       )}
       <p className="mb-6 text-sm text-gray-600">Opening a document is recorded in the audit log.</p>
 
@@ -179,14 +227,18 @@ export default async function AdminPage({
                 </li>
               ))}
             </ul>
-            <form action={processPayoutsAction} className="mt-3">
-              <button
-                type="submit"
-                className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark"
-              >
-                Pay out now
-              </button>
-            </form>
+            {isSuperAdmin ? (
+              <form action={processPayoutsAction} className="mt-3">
+                <button
+                  type="submit"
+                  className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark"
+                >
+                  Pay out now
+                </button>
+              </form>
+            ) : (
+              <p className="mt-3 text-sm text-gray-600">Only a super admin can pay out.</p>
+            )}
           </>
         )}
       </section>

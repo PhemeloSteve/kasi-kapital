@@ -29,3 +29,13 @@ export async function requireUser(
   }
   return user;
 }
+
+/**
+ * For pages and actions only super administrators may use (audit log, users, businesses, payouts).
+ * Reviewers are sent back to the review queue. The database refuses reviewers as well.
+ */
+export async function requireSuperAdmin(): Promise<CurrentUser> {
+  const user = await requireUser(["admin"]);
+  if (user.adminLevel !== "super_admin") redirect("/admin");
+  return user;
+}

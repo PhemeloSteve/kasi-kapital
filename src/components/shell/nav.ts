@@ -1,9 +1,12 @@
-import { landingPathForRole, type UserRole } from "@/domain/roles";
+import { landingPathForRole, type AdminLevel, type UserRole } from "@/domain/roles";
 
 export type NavItem = { href: string; label: string };
 
-/** The links in the top bar for each kind of account. */
-export function navForRole(role: UserRole): NavItem[] {
+/**
+ * The links in the top bar for each kind of account. Administrators get the extra links only when they are
+ * super admins; a reviewer (or an administrator with no level recorded) sees just the review queue.
+ */
+export function navForRole(role: UserRole, adminLevel?: AdminLevel | null): NavItem[] {
   switch (role) {
     case "investor":
     case "donor":
@@ -18,7 +21,14 @@ export function navForRole(role: UserRole): NavItem[] {
         { href: "/business/goals/new", label: "New goal" },
       ];
     case "admin":
-      return [{ href: "/admin", label: "Review queue" }];
+      return adminLevel === "super_admin"
+        ? [
+            { href: "/admin", label: "Review queue" },
+            { href: "/admin/audit", label: "Audit log" },
+            { href: "/admin/businesses", label: "Businesses" },
+            { href: "/admin/users", label: "Users" },
+          ]
+        : [{ href: "/admin", label: "Review queue" }];
   }
 }
 

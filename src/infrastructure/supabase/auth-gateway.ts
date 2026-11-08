@@ -1,5 +1,5 @@
 import { err, ok } from "@/domain/result";
-import { isUserRole } from "@/domain/roles";
+import { effectiveAdminLevel, isUserRole } from "@/domain/roles";
 import type { AuthGateway, CurrentUser } from "@/application/ports";
 import { parsePublicEnv } from "@/config/env";
 import { classifySignUpError } from "./auth-errors";
@@ -15,7 +15,7 @@ async function loadCurrentUser(
 ): Promise<CurrentUser | null> {
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, full_name, popia_consent_at")
+    .select("role, full_name, popia_consent_at, admin_level")
     .eq("id", userId)
     .maybeSingle();
   if (!profile || !isUserRole(profile.role)) return null;
@@ -24,6 +24,7 @@ async function loadCurrentUser(
     role: profile.role,
     fullName: profile.full_name,
     consented: profile.popia_consent_at !== null,
+    adminLevel: effectiveAdminLevel(profile.role, profile.admin_level),
   };
 }
 

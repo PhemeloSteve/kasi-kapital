@@ -37,6 +37,7 @@ export default async function BusinessDetailPage({ params }: { params: Promise<{
   return (
     <DashboardShell
       role={user.role}
+      adminLevel={user.adminLevel}
       name={user.fullName}
       title={business.name}
       subtitle={business.suburb ?? undefined}

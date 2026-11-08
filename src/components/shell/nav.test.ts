@@ -12,6 +12,27 @@ describe("navForRole", () => {
     ]);
     expect(navForRole("admin")).toEqual([{ href: "/admin", label: "Review queue" }]);
   });
+
+  it("shows a reviewer only the review queue", () => {
+    expect(navForRole("admin", "reviewer").map((l) => l.href)).toEqual(["/admin"]);
+    expect(navForRole("admin", null).map((l) => l.href)).toEqual(["/admin"]);
+  });
+
+  it("shows a super admin the audit log, businesses and users as well", () => {
+    expect(navForRole("admin", "super_admin")).toEqual([
+      { href: "/admin", label: "Review queue" },
+      { href: "/admin/audit", label: "Audit log" },
+      { href: "/admin/businesses", label: "Businesses" },
+      { href: "/admin/users", label: "Users" },
+    ]);
+  });
+
+  it("ignores the admin level for accounts that are not administrators", () => {
+    expect(navForRole("investor", "super_admin").map((l) => l.href)).toEqual([
+      "/investor",
+      "/contributions",
+    ]);
+  });
 });
 
 describe("isCurrent", () => {
@@ -32,5 +53,18 @@ describe("isCurrent", () => {
   it("does not match unrelated pages", () => {
     expect(isCurrent("/businesses/1", "/business", links)).toBe(false);
     expect(isCurrent("/contributions", "/investor", navForRole("investor"))).toBe(false);
+  });
+});
+
+describe("isCurrent for administrators", () => {
+  const links = navForRole("admin", "super_admin");
+  it("keeps the review queue from lighting up on the other admin pages", () => {
+    expect(isCurrent("/admin", "/admin", links)).toBe(true);
+    expect(isCurrent("/admin/audit", "/admin", links)).toBe(false);
+    expect(isCurrent("/admin/audit", "/admin/audit", links)).toBe(true);
+    expect(isCurrent("/admin/users", "/admin", links)).toBe(false);
+  });
+  it("still lights up the review queue on its own sub-pages", () => {
+    expect(isCurrent("/admin/mfa", "/admin", links)).toBe(true);
   });
 });

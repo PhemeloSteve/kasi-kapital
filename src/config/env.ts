@@ -17,6 +17,15 @@ const demoSchema = z.object({
   ALLOW_DEMO_KYC: z.enum(["true", "false"]).default("false"),
 });
 
+// Admin email notifications. Both are optional: without a secret the webhook refuses every call, and
+// without an email key it only logs what it would have sent.
+const notifySchema = z.object({
+  WEBHOOK_SECRET: z.string().min(16).optional(),
+  RESEND_API_KEY: z.string().min(1).optional(),
+  ADMIN_NOTIFY_EMAIL: z.string().email().optional(),
+  NOTIFY_FROM_EMAIL: z.string().min(3).default("Kasi Kapital <onboarding@resend.dev>"),
+});
+
 type Source = Record<string, string | undefined>;
 
 /** Fails fast with a clear message if configuration is wrong. */
@@ -40,4 +49,12 @@ export function isDemoKycEnabled(source: Source = process.env): boolean {
 /** True when the server can talk to the database as the service role (needed to confirm payments). */
 export function isServiceKeyConfigured(source: Source = process.env): boolean {
   return serviceSchema.safeParse(source).success;
+}
+
+/** Settings for admin notification emails. A blank value counts as "not set". */
+export function parseNotifyEnv(source: Source = process.env) {
+  const cleaned = Object.fromEntries(
+    Object.entries(source).filter(([, value]) => value !== undefined && value.trim() !== ""),
+  );
+  return notifySchema.parse(cleaned);
 }

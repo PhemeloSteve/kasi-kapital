@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   isDemoKycEnabled,
   isServiceKeyConfigured,
+  parseNotifyEnv,
   parsePaymentEnv,
   parsePublicEnv,
   parseServiceEnv,
@@ -34,3 +35,22 @@ describe("env", () => {
     ).toBe("http://localhost:3000");
   });
 });
+
+describe("notification env", () => {
+  it("is all optional, with a default sender", () => {
+    const env = parseNotifyEnv({});
+    expect(env.WEBHOOK_SECRET).toBeUndefined();
+    expect(env.RESEND_API_KEY).toBeUndefined();
+    expect(env.NOTIFY_FROM_EMAIL).toContain("Kasi Kapital");
+  });
+  it("treats blank values as not set", () => {
+    const env = parseNotifyEnv({ WEBHOOK_SECRET: "", RESEND_API_KEY: "  " });
+    expect(env.WEBHOOK_SECRET).toBeUndefined();
+    expect(env.RESEND_API_KEY).toBeUndefined();
+  });
+  it("rejects a short secret and a bad recipient", () => {
+    expect(() => parseNotifyEnv({ WEBHOOK_SECRET: "short" })).toThrow();
+    expect(() => parseNotifyEnv({ ADMIN_NOTIFY_EMAIL: "not-an-email" })).toThrow();
+  });
+});
+

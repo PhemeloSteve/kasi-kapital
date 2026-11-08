@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { landingPathForRole, type UserRole } from "@/domain/roles";
+import { landingPathForRole, type AdminLevel, type UserRole } from "@/domain/roles";
 import { Wordmark } from "./brand/Logo";
 import { navForRole } from "./shell/nav";
 import { NavLinks } from "./shell/NavLinks";
@@ -8,6 +8,8 @@ import { UserMenu } from "./shell/UserMenu";
 
 type Props = {
   role: UserRole;
+  /** Decides which admin links appear. Only used when `role` is "admin". */
+  adminLevel?: AdminLevel | null;
   name: string | null;
   title: string;
   subtitle?: string;
@@ -19,8 +21,17 @@ type Props = {
 };
 
 /** The frame around every signed-in page: green top bar (from the dashboard designs), page title and footer. */
-export function DashboardShell({ role, name, title, subtitle, actions, narrow, children }: Props) {
-  const items = navForRole(role);
+export function DashboardShell({
+  role,
+  adminLevel,
+  name,
+  title,
+  subtitle,
+  actions,
+  narrow,
+  children,
+}: Props) {
+  const items = navForRole(role, adminLevel);
 
   return (
     <div className="flex min-h-screen flex-col">
