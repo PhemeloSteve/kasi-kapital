@@ -5,7 +5,7 @@ import { z } from "zod";
 import { DashboardShell } from "@/components/DashboardShell";
 import { requireUser } from "@/app/_lib/guard";
 import { formatRand } from "@/domain/money";
-import { isMockPayments, paymentsReady } from "@/infrastructure/providers";
+import { isMockPayments, paymentsBlocked, paymentsReady } from "@/infrastructure/providers";
 import { createContributionStore } from "@/infrastructure/supabase/funding-store";
 import { payDemoCheckoutAction } from "./actions";
 
@@ -13,7 +13,8 @@ export const metadata = { title: "Demo checkout | Kasi Kapital" };
 
 export default async function MockCheckoutPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser(["investor", "donor"]);
-  if (!isMockPayments()) notFound();
+  // No demo checkout unless the demo provider is on and allowed to run.
+  if (!isMockPayments() || paymentsBlocked()) notFound();
 
   const id = z.uuid().safeParse((await params).id);
   if (!id.success) notFound();
