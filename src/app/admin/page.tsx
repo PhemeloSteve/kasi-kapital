@@ -35,6 +35,9 @@ const notices: Record<string, string> = {
   proof_approved_paid: "Proof approved and the money for that milestone was paid out.",
   proof_approved_waiting:
     "Proof approved. The goal hasn't raised enough yet, so the payout will be created automatically when more money arrives.",
+  payments_off: "Payments are switched off on this server, so nothing was paid out.",
+  proof_approved_payments_off:
+    "Proof approved. Payments are switched off on this server, so the payout is waiting.",
   proof_approved_payout_pending:
     "Proof approved. The payout is waiting for a super admin to release it.",
   proof_approved_payout_failed:

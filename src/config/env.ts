@@ -12,6 +12,10 @@ const serviceSchema = z.object({ SUPABASE_SERVICE_ROLE_KEY: z.string().min(1) })
 const paymentSchema = z.object({
   PAYMENT_PROVIDER: z.enum(["mock", "sandbox", "live"]).default("mock"),
 });
+const mockPaymentSchema = z.object({
+  // The demo payment provider moves no real money, so a live site must never use it by accident.
+  ALLOW_MOCK_PAYMENTS: z.enum(["true", "false"]).default("false"),
+});
 const demoSchema = z.object({
   // Lets a signed-in supporter mark themselves "identity verified" for demos. Never enable in production.
   ALLOW_DEMO_KYC: z.enum(["true", "false"]).default("false"),
@@ -40,6 +44,16 @@ export function parseServiceEnv(source: Source = process.env) {
 
 export function parsePaymentEnv(source: Source = process.env) {
   return paymentSchema.parse(source);
+}
+
+/**
+ * Whether the demo (mock) payment provider may run. Outside production it always may. In production it
+ * only may when ALLOW_MOCK_PAYMENTS is exactly "true", so forgetting to configure a real provider
+ * switches payments off instead of letting anyone "pay" with pretend money.
+ */
+export function isMockPaymentAllowed(source: Source = process.env): boolean {
+  const { ALLOW_MOCK_PAYMENTS } = mockPaymentSchema.parse(source);
+  return source.NODE_ENV !== "production" || ALLOW_MOCK_PAYMENTS === "true";
 }
 
 export function isDemoKycEnabled(source: Source = process.env): boolean {

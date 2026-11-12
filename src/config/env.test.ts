@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   isDemoKycEnabled,
+  isMockPaymentAllowed,
   isServiceKeyConfigured,
   parseNotifyEnv,
   parsePaymentEnv,
@@ -51,5 +52,27 @@ describe("notification env", () => {
   it("rejects a short secret and a bad recipient", () => {
     expect(() => parseNotifyEnv({ WEBHOOK_SECRET: "short" })).toThrow();
     expect(() => parseNotifyEnv({ ADMIN_NOTIFY_EMAIL: "not-an-email" })).toThrow();
+  });
+});
+
+describe("demo payments in production", () => {
+  it("are allowed outside production without any setting", () => {
+    expect(isMockPaymentAllowed({})).toBe(true);
+    expect(isMockPaymentAllowed({ NODE_ENV: "development" })).toBe(true);
+    expect(isMockPaymentAllowed({ NODE_ENV: "test" })).toBe(true);
+  });
+  it("are refused in production unless explicitly allowed", () => {
+    expect(isMockPaymentAllowed({ NODE_ENV: "production" })).toBe(false);
+    expect(isMockPaymentAllowed({ NODE_ENV: "production", ALLOW_MOCK_PAYMENTS: "false" })).toBe(
+      false,
+    );
+    expect(isMockPaymentAllowed({ NODE_ENV: "production", ALLOW_MOCK_PAYMENTS: "true" })).toBe(
+      true,
+    );
+  });
+  it("rejects a setting that is not exactly true or false", () => {
+    expect(() =>
+      isMockPaymentAllowed({ NODE_ENV: "production", ALLOW_MOCK_PAYMENTS: "yes" }),
+    ).toThrow();
   });
 });

@@ -5,7 +5,7 @@ import { reviewDocument } from "@/application/documents";
 import { processPayouts } from "@/application/funding";
 import { reviewMilestone } from "@/application/milestones";
 import { requireSuperAdmin, requireUser } from "@/app/_lib/guard";
-import { getPaymentGateway } from "@/infrastructure/providers";
+import { getPaymentGateway, paymentsBlocked } from "@/infrastructure/providers";
 import { createDocumentStore } from "@/infrastructure/supabase/document-store";
 import { createMilestoneStore } from "@/infrastructure/supabase/milestone-store";
 import { createPaymentServer } from "@/infrastructure/supabase/payment-server";
@@ -52,6 +52,7 @@ export async function reviewMilestoneAction(formData: FormData): Promise<void> {
   // A reviewer's approval leaves the payout waiting for one.
   if (!result.value.payoutCreated) redirect("/admin?notice=proof_approved_waiting");
   if (user.adminLevel !== "super_admin") redirect("/admin?notice=proof_approved_payout_pending");
+  if (paymentsBlocked()) redirect("/admin?notice=proof_approved_payments_off");
   const paid = await processPayouts({
     gateway: getPaymentGateway(),
     server: createPaymentServer(),
@@ -67,6 +68,7 @@ export async function processPayoutsAction(): Promise<void> {
   // Payouts go through the service role, which the database cannot restrict by admin level, so this
   // check is the only thing between a reviewer and a payout.
   await requireSuperAdmin();
+  if (paymentsBlocked()) redirect("/admin?notice=payments_off");
   const result = await processPayouts({
     gateway: getPaymentGateway(),
     server: createPaymentServer(),
