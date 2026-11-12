@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { parsePublicEnv } from "@/config/env";
-import { KEEP_COOKIE, sessionCookieOptions } from "./cookie-policy";
+import { cookiesAreSecure, KEEP_COOKIE, sessionCookieOptions } from "./cookie-policy";
 
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 
@@ -20,7 +20,11 @@ export async function createClient(options?: { persist?: boolean }) {
       setAll: (items: CookieToSet[]) => {
         try {
           items.forEach(({ name, value, options: cookieOptions }) =>
-            cookieStore.set(name, value, sessionCookieOptions(value, cookieOptions, persist)),
+            cookieStore.set(
+              name,
+              value,
+              sessionCookieOptions(value, cookieOptions, persist, cookiesAreSecure()),
+            ),
           );
         } catch {
           // Called from a Server Component; safe to ignore if middleware refreshes sessions.

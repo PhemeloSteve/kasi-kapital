@@ -126,10 +126,16 @@ test("4. a supporter finds the business and funds the goal through the demo chec
 test("5. the founder sends proof of spending for the first step", async ({ browser }) => {
   const { context, page } = await newActor(browser);
   await logIn(page, seed.founder.email);
-  await page.goto("/business");
+  const { data: goal } = await db
+    .from("funding_goals")
+    .select("id")
+    .eq("title", seed.goal.title)
+    .single();
+  await page.goto(`/business/goals/${goal?.id}`);
 
-  await page.locator('input[type="file"]').first().setInputFiles(samplePdf("invoice"));
-  await page.getByRole("button", { name: "Send proof" }).first().click();
+  const step = page.getByRole("listitem").filter({ hasText: seed.goal.milestone1 });
+  await step.locator('input[type="file"]').setInputFiles(samplePdf("invoice"));
+  await step.getByRole("button", { name: "Send proof" }).click();
 
   await expect
     .poll(async () => {
