@@ -3,6 +3,10 @@ import "@fontsource-variable/inter";
 import "@fontsource-variable/dancing-script";
 import "./globals.css";
 
+// Pages are built for each request, never ahead of time: the Content Security Policy carries a
+// per-request nonce, and a pre-built page could not have one.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: { default: "Kasi Kapital", template: "%s" },
   description:

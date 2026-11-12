@@ -206,7 +206,7 @@ A production server refuses the mock provider unless `ALLOW_MOCK_PAYMENTS=true` 
 - Private documents served through 60-second signed URLs; every admin view is audit-logged.
 - Per-person rate limits on contributions, uploads and proof submissions.
 - Open checkouts capped at 5 per supporter; expired ones stop counting.
-- Strict security headers and a Content Security Policy in `next.config.mjs`.
+- Strict security headers in `next.config.mjs`, plus a nonce-based Content Security Policy built for every request in `src/middleware.ts`: no inline scripts can run.
 - Locations rounded to ~1 km before storage; never a home address.
 - `npm audit` gate, CycloneDX SBOM, Dependabot, gitleaks and CodeQL in CI.
 

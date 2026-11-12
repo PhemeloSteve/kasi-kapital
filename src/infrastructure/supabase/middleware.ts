@@ -6,14 +6,24 @@ import { cookiesAreSecure, KEEP_COOKIE, sessionCookieOptions } from "./cookie-po
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 
 /** Refreshes the Supabase session cookie on every request and reports whether a user is signed in. */
-export async function updateSession(request: NextRequest) {
+export async function updateSession(
+  request: NextRequest,
+  extraRequestHeaders: Record<string, string> = {},
+) {
   const env = parsePublicEnv({
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   });
   const persist = request.cookies.get(KEEP_COOKIE)?.value === "1";
-  let response = NextResponse.next({ request });
+  // The headers passed on to the page. Built from the request's current headers, so cookies set below
+  // (a refreshed session) are included, plus anything the caller adds (the CSP and its nonce).
+  const forwardedHeaders = () => {
+    const headers = new Headers(request.headers);
+    for (const [name, value] of Object.entries(extraRequestHeaders)) headers.set(name, value);
+    return headers;
+  };
+  let response = NextResponse.next({ request: { headers: forwardedHeaders() } });
 
   const supabase = createServerClient(
     env.NEXT_PUBLIC_SUPABASE_URL,
@@ -23,7 +33,7 @@ export async function updateSession(request: NextRequest) {
         getAll: () => request.cookies.getAll(),
         setAll: (items: CookieToSet[]) => {
           items.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
+          response = NextResponse.next({ request: { headers: forwardedHeaders() } });
           items.forEach(({ name, value, options }) =>
             response.cookies.set(
               name,

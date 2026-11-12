@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { buildCsp, generateNonce } from "@/config/csp";
 import { updateSession } from "@/infrastructure/supabase/middleware";
 
 // Pages that need a signed-in user. Role checks happen again server-side in each page.
@@ -16,7 +17,17 @@ const protectedPrefixes = [
 ];
 
 export async function middleware(request: NextRequest) {
-  const { response, isAuthenticated } = await updateSession(request);
+  // A fresh nonce per request. Next.js reads the policy from the forwarded request and puts the nonce on
+  // its own scripts; the browser then refuses any script that does not carry it.
+  const csp = buildCsp({
+    nonce: generateNonce(),
+    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
+    development: process.env.NODE_ENV === "development",
+  });
+  const { response, isAuthenticated } = await updateSession(request, {
+    "content-security-policy": csp,
+  });
+  response.headers.set("Content-Security-Policy", csp);
   const { pathname } = request.nextUrl;
 
   const needsLogin = protectedPrefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -24,7 +35,9 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = `?next=${encodeURIComponent(pathname)}`;
-    return NextResponse.redirect(url);
+    const redirect = NextResponse.redirect(url);
+    redirect.headers.set("Content-Security-Policy", csp);
+    return redirect;
   }
   return response;
 }
