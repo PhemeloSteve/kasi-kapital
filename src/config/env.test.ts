@@ -53,4 +53,3 @@ describe("notification env", () => {
     expect(() => parseNotifyEnv({ ADMIN_NOTIFY_EMAIL: "not-an-email" })).toThrow();
   });
 });
-

@@ -8,11 +8,7 @@ const suspendInput = z.object({
 });
 
 export type SuspendError =
-  | "invalid_input"
-  | "reason_required"
-  | "not_allowed"
-  | "not_found"
-  | "failed";
+  "invalid_input" | "reason_required" | "not_allowed" | "not_found" | "failed";
 
 /** A super administrator suspends a business. The database re-checks the level and records the reason. */
 export async function suspendBusiness(
@@ -30,11 +26,7 @@ export async function suspendBusiness(
 }
 
 export type UnsuspendError =
-  | "invalid_input"
-  | "not_allowed"
-  | "not_suspended"
-  | "not_found"
-  | "failed";
+  "invalid_input" | "not_allowed" | "not_suspended" | "not_found" | "failed";
 
 /** A super administrator reinstates a suspended business. It goes back to "under review". */
 export async function unsuspendBusiness(

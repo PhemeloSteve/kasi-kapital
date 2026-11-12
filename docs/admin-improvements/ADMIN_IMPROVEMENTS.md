@@ -18,6 +18,7 @@ Tailwind CSS, Zod, Vitest.
 rules a second time. Never bypass the database rules from the app.
 
 **What already exists:**
+
 - `public.audit_log` table with columns `id`, `actor_id`, `action`, `entity`, `entity_id`,
   `details` (jsonb), `created_at`
 - `public.is_admin()` database function — returns true only when the signed-in token has
@@ -38,6 +39,7 @@ rules a second time. Never bypass the database rules from the app.
 ## Improvement 1 — Audit dashboard
 
 ### What to build
+
 A page at `/admin/audit` that shows every admin action in a filterable, paginated table.
 Admins must already be authenticated with two-factor (the existing guard handles this).
 
@@ -102,6 +104,7 @@ case "admin":
 ## Improvement 2 — Admin permission levels
 
 ### What to build
+
 Two admin levels: `reviewer` (documents and proof only) and `super_admin` (everything).
 
 ### Database (add to migration 0009)
@@ -145,10 +148,12 @@ reviewers.
 ### What to build
 
 #### /admin/businesses
+
 Table of all businesses: name, owner, verification badge, trust tier, goal count, and either
 a Suspend form (with a reason input) or a Reinstate button.
 
 #### /admin/users
+
 Table of all accounts: name, email, role, KYC status, total contributed. Super admin only.
 
 ### Database (add to migration 0009)
@@ -204,6 +209,7 @@ Both require `requireUser(["admin"])`. Both use `DashboardShell`.
 ## Improvement 4 — Proof queue count in page title
 
 ### What to build
+
 Dynamic metadata on `/admin/page.tsx` that includes the pending item count in the browser tab.
 
 ### Implementation
@@ -229,6 +235,7 @@ export async function generateMetadata() {
 ## Improvement 5 — Platform stats panel
 
 ### What to build
+
 Four stat cards at the top of `/admin`: total businesses, verified businesses, open goals,
 held in escrow (with paid-out total as a note).
 
@@ -268,6 +275,7 @@ above the existing proof queue section. Use icons from `lucide-react`.
 ## Improvement 6 — Notifications (email on new submission)
 
 ### What to build
+
 An API route that receives a Supabase Database Webhook and sends an email to the admin when a
 business is submitted for verification or milestone proof is uploaded. No extra service needed
 beyond a free Resend account.
@@ -316,6 +324,7 @@ supabase/migrations/0009_admin_improvements.sql
 ```
 
 Order:
+
 1. `is_super_admin()` function
 2. `admin_level` column on `profiles`
 3. `update public.profiles set admin_level = 'super_admin' where role = 'admin'`
@@ -363,16 +372,16 @@ Package the result as a new zip when done.
 
 ## File locations reference
 
-| What | Where |
-|---|---|
-| Existing admin page | `src/app/admin/page.tsx` |
-| Existing admin actions | `src/app/admin/actions.ts` |
-| Guard | `src/app/_lib/guard.ts` |
-| Navigation | `src/components/shell/nav.ts` |
-| Ports (interfaces) | `src/application/ports.ts` |
-| Supabase stores | `src/infrastructure/supabase/` |
-| DashboardShell | `src/components/DashboardShell.tsx` |
-| StatCard | `src/components/ui/StatCard.tsx` |
-| Migrations | `supabase/migrations/` |
-| DB tests | `supabase/tests/` |
-| Design tokens | `tailwind.config.ts` and `src/app/globals.css` |
+| What                   | Where                                          |
+| ---------------------- | ---------------------------------------------- |
+| Existing admin page    | `src/app/admin/page.tsx`                       |
+| Existing admin actions | `src/app/admin/actions.ts`                     |
+| Guard                  | `src/app/_lib/guard.ts`                        |
+| Navigation             | `src/components/shell/nav.ts`                  |
+| Ports (interfaces)     | `src/application/ports.ts`                     |
+| Supabase stores        | `src/infrastructure/supabase/`                 |
+| DashboardShell         | `src/components/DashboardShell.tsx`            |
+| StatCard               | `src/components/ui/StatCard.tsx`               |
+| Migrations             | `supabase/migrations/`                         |
+| DB tests               | `supabase/tests/`                              |
+| Design tokens          | `tailwind.config.ts` and `src/app/globals.css` |

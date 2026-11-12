@@ -125,6 +125,23 @@ PGHOST=localhost PGUSER=postgres ./supabase/tests/run_tests.sh
 
 Each test file runs on its own throwaway database. Your Supabase project is never touched.
 
+### End-to-end tests (needs Docker)
+
+Playwright drives a real browser through the whole story: a founder is verified by an administrator
+(with two-factor login), raises money through the demo checkout, proves the spending, and the payout
+is released. A second file checks that each role can only reach what it should.
+
+```bash
+npx supabase start          # local database, applies every migration
+npm run e2e:install         # one-off: downloads the test browser
+npm run e2e                 # builds the app, seeds fresh test accounts, runs the tests
+npm run e2e -- --ui         # watch it run
+```
+
+The tests refuse to run against anything but a local Supabase stack, because they create accounts with
+the service key. Test accounts use `@example.test` addresses and a run id, so reruns never collide.
+`npx supabase db reset` clears them.
+
 ---
 
 ## Supabase dashboard setup (one-off)
