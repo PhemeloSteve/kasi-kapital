@@ -12,6 +12,10 @@ type Options = {
 /** Sign-in cookies are only sent over HTTPS on a live site. Local development runs over plain HTTP. */
 export const cookiesAreSecure = () => process.env.NODE_ENV === "production";
 
+/** The options after the protections are applied, so callers can rely on those fields being set. */
+export type HardenedCookieOptions<T extends Options> = Omit<T, "httpOnly" | "secure" | "sameSite"> &
+  Options & { httpOnly: boolean; secure: boolean; sameSite: "lax" | "strict" };
+
 /**
  * The rules every sign-in cookie follows, whatever Supabase asks for:
  *
@@ -31,13 +35,13 @@ export function sessionCookieOptions<T extends Options>(
   options: T,
   persist: boolean,
   secure = false,
-): T {
-  const hardened: T = {
+): HardenedCookieOptions<T> {
+  const hardened = {
     ...options,
     httpOnly: true,
     secure: secure || options.secure === true,
     sameSite: options.sameSite === "strict" ? "strict" : "lax",
-  };
+  } as HardenedCookieOptions<T>;
   if (persist || value === "" || options.maxAge === 0) return hardened;
   return { ...hardened, maxAge: undefined, expires: undefined };
 }
