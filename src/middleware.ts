@@ -23,6 +23,7 @@ export async function middleware(request: NextRequest) {
     nonce: generateNonce(),
     supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
     development: process.env.NODE_ENV === "development",
+    turnstile: Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY),
   });
   const { response, isAuthenticated } = await updateSession(request, {
     "content-security-policy": csp,

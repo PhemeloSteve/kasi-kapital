@@ -50,15 +50,23 @@ export interface AuthGateway {
     password: string;
     fullName: string;
     role: SignupRole;
+    /** The answer to the robot check (Cloudflare Turnstile), when it is switched on. */
+    captchaToken?: string;
   }): Promise<
-    Result<{ hasSession: boolean }, "failed" | "rate_limited" | "weak_password" | "invalid_email">
+    Result<
+      { hasSession: boolean },
+      "failed" | "rate_limited" | "weak_password" | "invalid_email" | "captcha_failed"
+    >
   >;
   signIn(input: {
     email: string;
     password: string;
     /** Stay signed in after the browser closes. */
     keepSignedIn: boolean;
-  }): Promise<Result<CurrentUser, "invalid_credentials" | "unavailable">>;
+    captchaToken?: string;
+  }): Promise<
+    Result<CurrentUser, "invalid_credentials" | "unavailable" | "rate_limited" | "captcha_failed">
+  >;
   signOut(): Promise<void>;
   getCurrentUser(): Promise<CurrentUser | null>;
   acceptConsent(userId: string): Promise<Result<true, "failed">>;

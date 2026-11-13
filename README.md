@@ -85,18 +85,19 @@ cp .env.example .env.local   # fill in your values
 
 ### Environment variables
 
-| Variable                        | Where to find it                                                           | Required            |
-| ------------------------------- | -------------------------------------------------------------------------- | ------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase → Project Settings → API                                          | Yes                 |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Project Settings → API                                          | Yes                 |
-| `NEXT_PUBLIC_APP_URL`           | Your deployed URL or `http://localhost:3000`                               | Yes                 |
-| `SUPABASE_SERVICE_ROLE_KEY`     | Supabase → Project Settings → API                                          | Yes (demo payments) |
-| `PAYMENT_PROVIDER`              | Set to `mock`                                                              | Yes                 |
-| `ALLOW_MOCK_PAYMENTS`           | `true` on demo sites only; production refuses the mock provider without it | Optional            |
-| `ALLOW_DEMO_KYC`                | Set to `true` for demos only                                               | Optional            |
-| `WEBHOOK_SECRET`                | A random value of 16+ characters you choose                                | For admin emails    |
-| `RESEND_API_KEY`                | resend.com → API Keys                                                      | For admin emails    |
-| `ADMIN_NOTIFY_EMAIL`            | The address that receives admin alerts                                     | For admin emails    |
+| Variable                         | Where to find it                                                           | Required            |
+| -------------------------------- | -------------------------------------------------------------------------- | ------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`       | Supabase → Project Settings → API                                          | Yes                 |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`  | Supabase → Project Settings → API                                          | Yes                 |
+| `NEXT_PUBLIC_APP_URL`            | Your deployed URL or `http://localhost:3000`                               | Yes                 |
+| `SUPABASE_SERVICE_ROLE_KEY`      | Supabase → Project Settings → API                                          | Yes (demo payments) |
+| `PAYMENT_PROVIDER`               | Set to `mock`                                                              | Yes                 |
+| `ALLOW_MOCK_PAYMENTS`            | `true` on demo sites only; production refuses the mock provider without it | Optional            |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare → Turnstile → your widget (site key)                            | Optional            |
+| `ALLOW_DEMO_KYC`                 | Set to `true` for demos only                                               | Optional            |
+| `WEBHOOK_SECRET`                 | A random value of 16+ characters you choose                                | For admin emails    |
+| `RESEND_API_KEY`                 | resend.com → API Keys                                                      | For admin emails    |
+| `ADMIN_NOTIFY_EMAIL`             | The address that receives admin alerts                                     | For admin emails    |
 
 Never commit `.env.local`. The `SUPABASE_SERVICE_ROLE_KEY` is server-only and must never reach the browser.
 

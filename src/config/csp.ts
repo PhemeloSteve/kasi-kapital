@@ -39,9 +39,13 @@ export type CspInput = {
   supabaseUrl: string;
   /** The Next.js development server needs eval for hot reloading. Never true on a live site. */
   development: boolean;
+  /** Allow Cloudflare Turnstile (the sign-in and sign-up robot check) to load. Off unless it is set up. */
+  turnstile?: boolean;
 };
 
-export function buildCsp({ nonce, supabaseUrl, development }: CspInput): string {
+const CLOUDFLARE_CHALLENGES = "https://challenges.cloudflare.com";
+
+export function buildCsp({ nonce, supabaseUrl, development, turnstile = false }: CspInput): string {
   const supabase = originOf(supabaseUrl);
   const supabaseSocket = websocketOriginOf(supabaseUrl);
 
@@ -56,8 +60,12 @@ export function buildCsp({ nonce, supabaseUrl, development }: CspInput): string 
       .filter(Boolean)
       .join(" "),
     "font-src 'self'",
-    ["connect-src 'self'", supabase, supabaseSocket].filter(Boolean).join(" "),
-    "frame-src https://www.youtube-nocookie.com",
+    ["connect-src 'self'", supabase, supabaseSocket, turnstile ? CLOUDFLARE_CHALLENGES : ""]
+      .filter(Boolean)
+      .join(" "),
+    ["frame-src https://www.youtube-nocookie.com", turnstile ? CLOUDFLARE_CHALLENGES : ""]
+      .filter(Boolean)
+      .join(" "),
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

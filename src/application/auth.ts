@@ -5,6 +5,8 @@ import { toFieldErrors } from "./form-errors";
 import type { AuthGateway } from "./ports";
 
 const email = z.string().trim().toLowerCase().pipe(z.email());
+// Cloudflare Turnstile codes are at most 2048 characters.
+const captchaToken = z.string().min(1).max(2048).optional();
 
 export const signUpInput = z.object({
   fullName: z.string().trim().min(2).max(100),
@@ -13,12 +15,14 @@ export const signUpInput = z.object({
   password: z.string().min(10).max(72),
   role: z.enum(signupRoles),
   consent: z.literal(true),
+  captchaToken,
 });
 
 export const logInInput = z.object({
   email,
   password: z.string().min(1).max(72),
   keep: z.boolean().default(false),
+  captchaToken,
 });
 
 export type FieldErrors = Partial<
@@ -36,7 +40,8 @@ const fieldMessages: Record<keyof FieldErrors, string> = {
 export type SignUpError =
   | { code: "invalid_input"; fields: FieldErrors }
   | { code: "signup_failed" }
-  | { code: "rate_limited" };
+  | { code: "rate_limited" }
+  | { code: "captcha_failed" };
 
 export type SignUpOutcome =
   { status: "signed_in"; landingPath: string } | { status: "confirm_email" };
@@ -51,9 +56,9 @@ export async function signUp(
       code: "invalid_input",
       fields: toFieldErrors(parsed.error.issues, fieldMessages),
     });
-  const { fullName, email, password, role } = parsed.data;
+  const { fullName, email, password, role, captchaToken } = parsed.data;
 
-  const created = await deps.auth.signUp({ email, password, fullName, role });
+  const created = await deps.auth.signUp({ email, password, fullName, role, captchaToken });
   if (!created.ok) {
     if (created.error === "weak_password") {
       return err({
@@ -67,13 +72,15 @@ export async function signUp(
         fields: { email: "That email address can't be used. Try a different one." },
       });
     }
+    if (created.error === "captcha_failed") return err({ code: "captcha_failed" });
     return err({ code: created.error === "rate_limited" ? "rate_limited" : "signup_failed" });
   }
   if (!created.value.hasSession) return ok({ status: "confirm_email" });
   return ok({ status: "signed_in", landingPath: landingPathForRole(role) });
 }
 
-export type LogInError = "invalid_input" | "invalid_credentials" | "unavailable";
+export type LogInError =
+  "invalid_input" | "invalid_credentials" | "unavailable" | "rate_limited" | "captcha_failed";
 
 export async function logIn(
   deps: { auth: AuthGateway },
@@ -82,8 +89,8 @@ export async function logIn(
   const parsed = logInInput.safeParse(rawInput);
   if (!parsed.success) return err("invalid_input");
 
-  const { email, password, keep } = parsed.data;
-  const signedIn = await deps.auth.signIn({ email, password, keepSignedIn: keep });
+  const { email, password, keep, captchaToken } = parsed.data;
+  const signedIn = await deps.auth.signIn({ email, password, keepSignedIn: keep, captchaToken });
   if (!signedIn.ok) return err(signedIn.error);
 
   const user = signedIn.value;

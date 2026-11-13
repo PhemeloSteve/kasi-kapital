@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { signUpAction, type FormState } from "@/app/(auth)/actions";
 import { AuthField } from "./auth/AuthField";
+import { TurnstileField } from "./auth/TurnstileField";
 import { authErrorClass, authLinkClass, AuthSubmit } from "./auth/AuthButton";
 
 const initial: FormState = { status: "idle" };
@@ -149,6 +150,7 @@ export function SignUpForm() {
         )}
       </div>
 
+      <TurnstileField resetSignal={state} />
       <AuthSubmit pending={pending} pendingLabel="Creating account…">
         Create account
       </AuthSubmit>

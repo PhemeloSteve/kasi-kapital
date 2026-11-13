@@ -5,6 +5,7 @@ import { logIn, signUp, type FieldErrors } from "@/application/auth";
 import { safeRedirectPath } from "@/domain/safe-redirect";
 import { createAuthGateway } from "@/infrastructure/supabase/auth-gateway";
 import { readLogInForm, readSignUpForm } from "./form-input";
+import { logInErrorMessage, signUpErrorMessage } from "./messages";
 
 export type FormState = {
   status: "idle" | "error" | "confirm_email";
@@ -22,11 +23,7 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
     if (result.error.code === "invalid_input") {
       return { status: "error", fields: result.error.fields, values };
     }
-    const message =
-      result.error.code === "rate_limited"
-        ? "Too many attempts. Please wait a few minutes and try again."
-        : "We couldn't create your account. If you already have one, try logging in.";
-    return { status: "error", message, values };
+    return { status: "error", message: signUpErrorMessage(result.error.code), values };
   }
   if (result.value.status === "confirm_email") return { status: "confirm_email", values };
   redirect(result.value.landingPath);
@@ -37,11 +34,11 @@ export async function logInAction(_prev: FormState, formData: FormData): Promise
   const result = await logIn({ auth: createAuthGateway() }, credentials);
 
   if (!result.ok) {
-    const message =
-      result.error === "unavailable"
-        ? "The service is temporarily unavailable. Please try again shortly."
-        : "Incorrect email or password.";
-    return { status: "error", message, values: { email: credentials.email } };
+    return {
+      status: "error",
+      message: logInErrorMessage(result.error),
+      values: { email: credentials.email },
+    };
   }
   const next = safeRedirectPath(formData.get("next"), result.value.landingPath);
   redirect(result.value.landingPath === "/consent" ? "/consent" : next);
