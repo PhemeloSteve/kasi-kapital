@@ -92,17 +92,16 @@ do $$ begin
   raise notice 'PASS P1-P3: admin levels cannot be changed by the people they apply to, and only admins have one';
 end $$;
 
--- a super admin may change a level
-set role authenticated;
-select set_config('request.jwt.claim.sub', 'aa990000-0000-4000-8000-000000000001', false) \gset
-select set_config('request.jwt.claims', '{"sub":"aa990000-0000-4000-8000-000000000001","aal":"aal2"}', false) \gset
-update public.profiles set admin_level = 'super_admin' where id = 'aa990000-0000-4000-8000-000000000002';
-reset role;
+-- Nobody can edit another person's profile through the API (the only update rule is "your own row"),
+-- so a level is changed from the SQL editor or server code, where there is no signed-in user.
+select set_config('request.jwt.claim.sub', '', false) \gset
+select set_config('request.jwt.claims', '', false) \gset
 do $$ begin
+  update public.profiles set admin_level = 'super_admin' where id = 'aa990000-0000-4000-8000-000000000002';
   assert (select admin_level from public.profiles where id = 'aa990000-0000-4000-8000-000000000002') = 'super_admin',
-    'FAIL P4: a super admin could not promote a reviewer';
+    'FAIL P4: the project owner could not change an admin level';
   update public.profiles set admin_level = 'reviewer' where id = 'aa990000-0000-4000-8000-000000000002';
-  raise notice 'PASS P4: a super admin can change another admin''s level';
+  raise notice 'PASS P4: the project owner (SQL editor) can change an admin level';
 end $$;
 
 -- ===== Audit log =====
