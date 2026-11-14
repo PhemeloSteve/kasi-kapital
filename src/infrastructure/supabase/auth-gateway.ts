@@ -2,7 +2,7 @@ import { err, ok } from "@/domain/result";
 import { effectiveAdminLevel, isUserRole } from "@/domain/roles";
 import type { AuthGateway, CurrentUser } from "@/application/ports";
 import { parsePublicEnv } from "@/config/env";
-import { classifySignUpError } from "./auth-errors";
+import { classifySignInError, classifySignUpError } from "./auth-errors";
 import { cookies } from "next/headers";
 import { KEEP_COOKIE } from "./cookie-policy";
 import { createClient } from "./server";
@@ -31,7 +31,7 @@ async function loadCurrentUser(
 /** Supabase implementation of the AuthGateway port. */
 export function createAuthGateway(): AuthGateway {
   return {
-    async signUp({ email, password, fullName, role }) {
+    async signUp({ email, password, fullName, role, captchaToken }) {
       const supabase = await createClient();
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -41,6 +41,8 @@ export function createAuthGateway(): AuthGateway {
           // timestamps consent itself, so the client cannot forge either.
           data: { role, full_name: fullName, popia_consent: true },
           emailRedirectTo: `${parsePublicEnv().NEXT_PUBLIC_APP_URL}/auth/callback`,
+          // Supabase checks this with Cloudflare when CAPTCHA protection is on in its dashboard.
+          captchaToken,
         },
       });
       if (error) {
@@ -55,9 +57,13 @@ export function createAuthGateway(): AuthGateway {
       return ok({ hasSession: data.session !== null });
     },
 
-    async signIn({ email, password, keepSignedIn }) {
+    async signIn({ email, password, keepSignedIn, captchaToken }) {
       const supabase = await createClient({ persist: keepSignedIn });
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+        options: { captchaToken },
+      });
       if (error || !data.user) {
         if (error)
           console.error("[auth] signIn failed", {
@@ -65,8 +71,7 @@ export function createAuthGateway(): AuthGateway {
             status: error.status,
             code: error.code,
           });
-        // 4xx = wrong credentials or unconfirmed email; anything else = service trouble.
-        return err(error && (error.status ?? 500) >= 500 ? "unavailable" : "invalid_credentials");
+        return err(error ? classifySignInError(error) : "invalid_credentials");
       }
       const user = await loadCurrentUser(supabase, data.user.id);
       if (!user) return err("unavailable");

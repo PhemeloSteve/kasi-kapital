@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { logInAction, type FormState } from "@/app/(auth)/actions";
 import { AuthField } from "./auth/AuthField";
+import { TurnstileField } from "./auth/TurnstileField";
 import { authErrorClass, authLinkClass, AuthSubmit } from "./auth/AuthButton";
 
 const initial: FormState = { status: "idle" };
@@ -48,6 +49,7 @@ export function LogInForm({ next }: { next?: string }) {
         Keep me logged in
       </label>
 
+      <TurnstileField resetSignal={state} />
       <AuthSubmit pending={pending} pendingLabel="Signing in…">
         Sign in
       </AuthSubmit>
