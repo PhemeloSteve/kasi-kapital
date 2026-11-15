@@ -8,6 +8,7 @@ import {
   type UploadableType,
 } from "@/domain/documents";
 import { err, ok, type Result } from "@/domain/result";
+import { scanUpload, type ScanProblem } from "@/domain/upload-scan";
 import type { BusinessStore, DocumentStore } from "./ports";
 
 type Deps = { business: BusinessStore; documents: DocumentStore };
@@ -19,10 +20,21 @@ export type UploadError =
   | "empty"
   | "too_large"
   | "unsupported_type"
+  | "unsafe_file"
+  | "encrypted_pdf"
+  | "unreadable_file"
   | "no_business"
   | "suspended"
   | "limit_reached"
   | "upload_failed";
+
+/** What to tell the founder for each way the scan can refuse a file. */
+const scanErrors: Record<ScanProblem, UploadError> = {
+  active_content: "unsafe_file",
+  encrypted_pdf: "encrypted_pdf",
+  malformed: "unreadable_file",
+  too_complex: "unreadable_file",
+};
 
 export type StoredDocument = { id: string; bucket: string; path: string };
 
@@ -40,6 +52,11 @@ export async function storeDocument(
   const checked = validateUpload(bytes);
   if (!checked.ok) return err(checked.error);
 
+  // Last check before anything is stored: no scripts or attachments in PDFs, and images lose their hidden
+  // metadata. What comes back is what gets stored.
+  const scanned = await scanUpload(checked.value, bytes);
+  if (!scanned.ok) return err(scanErrors[scanned.error]);
+
   const business = await deps.business.getMyBusiness(userId);
   if (!business) return err("no_business");
   if (business.verification === "suspended") return err("suspended");
@@ -52,7 +69,7 @@ export async function storeDocument(
   const stored = await deps.documents.upload({
     bucket,
     path,
-    bytes,
+    bytes: scanned.value,
     contentType: kind.contentType,
   });
   if (!stored.ok) return err("upload_failed");
