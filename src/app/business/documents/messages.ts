@@ -7,6 +7,10 @@ export const uploadMessages: Record<UploadError, string> = {
   empty: "That file is empty. Choose a different one.",
   too_large: "That file is too large. The limit is 4 MB. Try a PDF, or a smaller photo.",
   unsupported_type: "We can only accept PDF, JPG or PNG files.",
+  unsafe_file:
+    "That PDF can run scripts or carries attachments, so we can't accept it. Print it to a new PDF, or upload a photo of the document instead.",
+  encrypted_pdf: "That PDF is password protected. Please upload an unlocked copy.",
+  unreadable_file: "We couldn't read that file. Save it again, or upload a different copy.",
   no_business: "Create your business profile first.",
   suspended: "This business is suspended. Please contact support.",
   limit_reached: "You have reached the limit of 20 documents. Delete some you no longer need.",
