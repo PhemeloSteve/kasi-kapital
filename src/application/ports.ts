@@ -405,3 +405,16 @@ export interface BusinessModeration {
     businessId: string,
   ): Promise<Result<true, "not_allowed" | "not_suspended" | "not_found" | "failed">>;
 }
+
+// ---------- Retention ----------
+export type DueDocument = { id: string; type: string; storagePath: string };
+
+/** Server-side only: deleting documents that have passed their retention period. */
+export interface RetentionStore {
+  /** Expired rejected documents, oldest first. */
+  listDueDocuments(limit: number): Promise<DueDocument[]>;
+  /** Deletes the stored files. Returns the ids of the documents whose file is now gone. */
+  removeFiles(documents: DueDocument[]): Promise<string[]>;
+  /** Deletes the records (and writes the audit log). Returns how many were deleted. */
+  deleteRecords(ids: string[]): Promise<number>;
+}

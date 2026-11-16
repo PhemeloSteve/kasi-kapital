@@ -206,6 +206,7 @@ A production server refuses the mock provider unless `ALLOW_MOCK_PAYMENTS=true` 
 - The admin webhook checks a shared secret and refuses all calls when none is set.
 - Private documents served through 60-second signed URLs; every admin view is audit-logged.
 - Uploads are checked before they are stored: PDFs that can run scripts, carry attachments or are locked are refused, and photos lose hidden location data.
+- Rejected documents and proof files are deleted automatically 30 days after rejection, and each deletion is logged.
 - Per-person rate limits on contributions, uploads and proof submissions.
 - Open checkouts capped at 5 per supporter; expired ones stop counting.
 - Strict security headers in `next.config.mjs`, plus a nonce-based Content Security Policy built for every request in `src/middleware.ts`: no inline scripts can run.
@@ -248,8 +249,8 @@ src/
   app/             # Next.js App Router pages and server actions
   components/      # UI components
 supabase/
-  migrations/      # 9 migrations (schema, RLS, functions, triggers)
-  tests/           # SQL checks across 7 test files
+  migrations/      # 10 migrations (schema, RLS, functions, triggers)
+  tests/           # SQL checks across 8 test files
 .github/
   workflows/       # CI: quality, security, database
 ```
