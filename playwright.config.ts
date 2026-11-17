@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { E2E_CRON_SECRET } from "./e2e/support/constants";
 
 const port = Number(process.env.E2E_PORT ?? 3000);
 const baseURL = `http://localhost:${port}`;
@@ -31,6 +32,8 @@ export default defineConfig({
       PAYMENT_PROVIDER: "mock",
       // A production build refuses the demo payment provider unless this is set (hardening step).
       ALLOW_MOCK_PAYMENTS: "true",
+      // The retention cron route needs a secret; the e2e test calls it with this one.
+      CRON_SECRET: E2E_CRON_SECRET,
     },
   },
 });
