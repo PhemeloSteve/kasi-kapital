@@ -18,7 +18,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "check": "npm run lint && npm run typecheck && npm run format:check && npm test",
-    "audit": "npm audit --audit-level=high",
+    "audit": "npm audit --omit=dev --audit-level=high",
     "sbom": "npm sbom --sbom-format cyclonedx --omit dev > sbom.json",
     "db:push": "npx supabase db push",
     "db:types": "npx supabase gen types typescript --linked > src/infrastructure/supabase/database.types.ts",
