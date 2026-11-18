@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { err, ok } from "@/domain/result";
-import { suspendBusiness, unsuspendBusiness } from "./moderation";
+import { closeBusiness, suspendBusiness, unsuspendBusiness } from "./moderation";
 import type { BusinessModeration } from "./ports";
 
 const ID = "11111111-1111-4111-8111-111111111111";
@@ -9,6 +9,7 @@ function makeModeration(overrides: Partial<BusinessModeration> = {}): BusinessMo
   return {
     suspend: async () => ok(true as const),
     unsuspend: async () => ok(true as const),
+    close: async () => ok(true as const),
     ...overrides,
   };
 }
@@ -84,5 +85,69 @@ describe("unsuspendBusiness", () => {
       { businessId: ID },
     );
     expect(result).toEqual(err("not_suspended"));
+  });
+});
+
+describe("closeBusiness", () => {
+  it("passes the id and the trimmed reason to the store once confirmed", async () => {
+    const close = vi.fn(async () => ok(true as const));
+    const result = await closeBusiness(
+      { moderation: makeModeration({ close }) },
+      { businessId: ID, reason: "  Owner stopped trading  ", confirmed: true },
+    );
+    expect(result).toEqual(ok(true));
+    expect(close).toHaveBeenCalledWith({ businessId: ID, reason: "Owner stopped trading" });
+  });
+
+  it("needs the confirmation and never calls the store without it", async () => {
+    const close = vi.fn(async () => ok(true as const));
+    for (const confirmed of [false, undefined, "yes", 1, null]) {
+      const result = await closeBusiness(
+        { moderation: makeModeration({ close }) },
+        { businessId: ID, reason: "stopped trading", confirmed },
+      );
+      expect(result).toEqual(err("confirm_required"));
+    }
+    expect(close).not.toHaveBeenCalled();
+  });
+
+  it("needs a reason and never calls the store without one", async () => {
+    const close = vi.fn(async () => ok(true as const));
+    for (const reason of ["", "   ", undefined, 42]) {
+      const result = await closeBusiness(
+        { moderation: makeModeration({ close }) },
+        { businessId: ID, reason, confirmed: true },
+      );
+      expect(result).toEqual(err("reason_required"));
+    }
+    expect(close).not.toHaveBeenCalled();
+  });
+
+  it("refuses a reason over 300 characters or an id that is not a uuid", async () => {
+    const close = vi.fn(async () => ok(true as const));
+    const deps = { moderation: makeModeration({ close }) };
+    expect(
+      await closeBusiness(deps, { businessId: ID, reason: "x".repeat(301), confirmed: true }),
+    ).toEqual(err("invalid_input"));
+    expect(
+      await closeBusiness(deps, { businessId: "nope", reason: "stopped", confirmed: true }),
+    ).toEqual(err("invalid_input"));
+    expect(close).not.toHaveBeenCalled();
+  });
+
+  it("passes each refusal from the store through", async () => {
+    for (const code of [
+      "not_allowed",
+      "not_found",
+      "already_closed",
+      "money_held",
+      "failed",
+    ] as const) {
+      const result = await closeBusiness(
+        { moderation: makeModeration({ close: async () => err(code) }) },
+        { businessId: ID, reason: "stopped", confirmed: true },
+      );
+      expect(result).toEqual(err(code));
+    }
   });
 });

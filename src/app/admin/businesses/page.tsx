@@ -3,19 +3,26 @@ import { TrustTierBadge } from "@/components/TrustTierBadge";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import { requireSuperAdmin } from "@/app/_lib/guard";
 import { createAdminDirectory } from "@/infrastructure/supabase/admin-store";
-import { suspendBusinessAction, unsuspendBusinessAction } from "./actions";
+import { closeBusinessAction, suspendBusinessAction, unsuspendBusinessAction } from "./actions";
 
 export const metadata = { title: "Businesses | Kasi Kapital" };
 
 const notices: Record<string, string> = {
   suspended: "Business suspended. It is no longer visible to supporters.",
   unsuspended: "Business reinstated. It is back under review.",
+  closed:
+    "Business closed. Its unreviewed documents are deleted within a day, and approved ones after the retention period.",
 };
 const errors: Record<string, string> = {
   reason_required: "Please give a reason (up to 300 characters) for suspending.",
   not_allowed: "Only a super admin can do that.",
   not_found: "That business could not be found.",
   not_suspended: "That business is not suspended.",
+  closed: "A closed business cannot be reinstated.",
+  already_closed: "That business is already closed.",
+  confirm_required: "Please tick the box to confirm. Closing cannot be undone.",
+  money_held:
+    "Money is still held for this business, or a payout is on its way. It can only be closed once that is settled.",
   invalid_input: "That request was not valid.",
   failed: "Something went wrong. Please try again.",
 };
@@ -81,38 +88,85 @@ export default async function AdminBusinessesPage({
                   <td className="px-4 py-3 font-medium text-gray-900">{b.name}</td>
                   <td className="px-4 py-3 text-gray-700">{b.ownerName ?? "—"}</td>
                   <td className="px-4 py-3">
-                    <VerificationBadge status={b.verification} />
+                    {b.closedAt ? (
+                      <span className="inline-block rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                        Closed
+                      </span>
+                    ) : (
+                      <VerificationBadge status={b.verification} />
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <TrustTierBadge tier={b.trustTier} />
                   </td>
                   <td className="px-4 py-3 text-gray-700">{b.goalCount}</td>
-                  <td className="px-4 py-3">
-                    {b.verification === "suspended" ? (
-                      <form action={unsuspendBusinessAction}>
-                        <input type="hidden" name="businessId" value={b.id} />
-                        <button type="submit" className="btn-secondary">
-                          Reinstate
-                        </button>
-                      </form>
+                  <td className="space-y-2 px-4 py-3">
+                    {b.closedAt ? (
+                      <p className="text-sm text-gray-600">Closed on {b.closedAt.slice(0, 10)}</p>
                     ) : (
-                      <form action={suspendBusinessAction} className="flex items-center gap-2">
-                        <input type="hidden" name="businessId" value={b.id} />
-                        <input
-                          name="reason"
-                          required
-                          maxLength={300}
-                          aria-label={`Reason for suspending ${b.name}`}
-                          placeholder="Reason (required)"
-                          className="min-w-0 rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-                        />
-                        <button
-                          type="submit"
-                          className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800"
-                        >
-                          Suspend
-                        </button>
-                      </form>
+                      <>
+                        {b.verification === "suspended" ? (
+                          <form action={unsuspendBusinessAction}>
+                            <input type="hidden" name="businessId" value={b.id} />
+                            <button type="submit" className="btn-secondary">
+                              Reinstate
+                            </button>
+                          </form>
+                        ) : (
+                          <form action={suspendBusinessAction} className="flex items-center gap-2">
+                            <input type="hidden" name="businessId" value={b.id} />
+                            <input
+                              name="reason"
+                              required
+                              maxLength={300}
+                              aria-label={`Reason for suspending ${b.name}`}
+                              placeholder="Reason (required)"
+                              className="min-w-0 rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                            />
+                            <button
+                              type="submit"
+                              className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800"
+                            >
+                              Suspend
+                            </button>
+                          </form>
+                        )}
+                        <details>
+                          <summary className="cursor-pointer text-sm font-medium text-gray-700">
+                            Close business…
+                          </summary>
+                          <form action={closeBusinessAction} className="mt-2 space-y-2">
+                            <input type="hidden" name="businessId" value={b.id} />
+                            <input
+                              name="reason"
+                              required
+                              maxLength={300}
+                              aria-label={`Reason for closing ${b.name}`}
+                              placeholder="Reason (required)"
+                              className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                            />
+                            <label className="flex items-start gap-2 text-xs text-gray-700">
+                              <input
+                                type="checkbox"
+                                name="confirm"
+                                value="yes"
+                                required
+                                className="mt-0.5"
+                              />
+                              <span>
+                                I understand this cannot be undone. The business is hidden for good
+                                and its documents are deleted after the retention period.
+                              </span>
+                            </label>
+                            <button
+                              type="submit"
+                              className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800"
+                            >
+                              Close business
+                            </button>
+                          </form>
+                        </details>
+                      </>
                     )}
                   </td>
                 </tr>

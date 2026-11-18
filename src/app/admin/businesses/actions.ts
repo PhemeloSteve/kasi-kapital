@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { suspendBusiness, unsuspendBusiness } from "@/application/moderation";
+import { closeBusiness, suspendBusiness, unsuspendBusiness } from "@/application/moderation";
 import { requireSuperAdmin } from "@/app/_lib/guard";
 import { createBusinessModeration } from "@/infrastructure/supabase/admin-store";
 
@@ -32,5 +32,21 @@ export async function unsuspendBusinessAction(formData: FormData): Promise<void>
   );
   redirect(
     result.ok ? "/admin/businesses?notice=unsuspended" : `/admin/businesses?error=${result.error}`,
+  );
+}
+
+export async function closeBusinessAction(formData: FormData): Promise<void> {
+  await requireSuperAdmin();
+
+  const result = await closeBusiness(
+    { moderation: createBusinessModeration() },
+    {
+      businessId: text(formData, "businessId"),
+      reason: text(formData, "reason"),
+      confirmed: formData.get("confirm") === "yes",
+    },
+  );
+  redirect(
+    result.ok ? "/admin/businesses?notice=closed" : `/admin/businesses?error=${result.error}`,
   );
 }

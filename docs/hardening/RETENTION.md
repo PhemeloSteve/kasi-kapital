@@ -19,17 +19,29 @@ audit log (`document.purged`, with the reason and the document type, and no file
 - The database re-checks every document itself, so an approved or recent document is never deleted, even if
   something passed its id in by mistake.
 
+## When a business is closed
+
+A super administrator can close a business for good (Admin, Businesses, **Close business**). It is hidden
+from supporters, its goals stop taking money, and it cannot be reinstated from the app. Closing needs a
+reason, which goes in the audit log.
+
+- It is **refused while money is still held** for the business, while a payout is on its way, or while a
+  checkout is open, because there is no refund process yet. Pay it out first.
+- Documents that nobody approved (pending or rejected) are deleted **the next time the daily job runs**.
+- **Approved documents** (identity, bank statement and so on) are deleted **12 months** after closing
+  (`retention_closed_document_months`).
+- Every deletion is logged with its reason (`closed_business_unreviewed`, `closed_business_retention` or
+  `rejected_retention`) and never with a file name.
+
 ## What is kept
 
-- **Approved documents** stay while the business is active.
+- **Approved documents** stay while the business is active, and for 12 months after it is closed.
 - **Money records** (contributions, payments, payouts) and the **audit log** are never touched by this job.
   Financial records normally have to be kept for several years (FICA is commonly read as five years).
   Confirm the exact period with your Information Officer before launch.
 
 ## Not built yet (needs decisions)
 
-- Deleting approved documents some months after a business closes. The app has no "closed business" state
-  yet, so there is nothing to start the clock.
 - A "delete my data" request. This cannot be a plain wipe: money records may have to be kept, so it needs a
   design that removes what can go and anonymises what must stay. See the questions at the end of the step 3
   summary.
@@ -56,4 +68,14 @@ The answer is a count only, for example `{"ok":true,"found":2,"filesRemoved":2,"
 update public.platform_settings
    set int_value = 60
  where key = 'retention_rejected_document_days';
+```
+
+## Money records
+
+Contribution, payment and payout records are kept for at least **5 years** (`retention_financial_record_years`).
+Nothing deletes them in this build: the setting records the policy, and a purge job for records older than
+that is a later task. Confirm the period with your Information Officer before launch.
+
+```sql
+update public.platform_settings set int_value = 24 where key = 'retention_closed_document_months';
 ```

@@ -7,7 +7,7 @@ Even as a solo project, we work as if a team will review it.
 1. Branch from `main`: `feat/<topic>`, `fix/<topic>`, `chore/<topic>`.
 2. Keep changes small and focused; one concern per pull request.
 3. Use [Conventional Commits](https://www.conventionalcommits.org): `feat: add milestone approval`, `fix: reject negative amounts`.
-4. Run `npm run check` before pushing. CI runs lint, types, formatting, tests with coverage, build, dependency audit, SBOM and secret scan.
+4. Run `npm run check` before pushing. CI runs lint, types, formatting, tests with coverage, build, dependency audit, SBOM, secret scan, the SQL database tests, the browser tests and CodeQL. If you changed something a person sees or does, also run `npm run e2e` (needs Docker).
 5. Open a pull request using the template. Review your own diff first; AI-generated code gets extra scrutiny on security-critical paths (access rules, documents, money).
 6. Squash-merge to keep history readable. `main` should always be deployable.
 
@@ -21,9 +21,9 @@ Even as a solo project, we work as if a team will review it.
 ## Dependencies
 
 - Add a dependency only when it clearly earns its place. Prefer well-maintained packages.
-- Commit the lockfile. Review Dependabot PRs; do not ignore audit failures.
+- Commit the lockfile. Review Dependabot PRs; do not ignore audit failures. The CI audit covers the dependencies that ship to users; advisories in development tools are cleared through Dependabot upgrades.
 - Generate the SBOM with `npm run sbom` when preparing a release.
 
 ## Database changes
 
-Add a new numbered file in `supabase/migrations/`. Every new table must enable RLS and include policies in the same migration.
+Add a new numbered file in `supabase/migrations/`. Every new table must enable RLS and include policies in the same migration. Run `npx supabase migration up` so your local database (and the browser tests) have it, and after merging apply it to the live project with `npx supabase db push --remote`, checking `--dry-run` first.
