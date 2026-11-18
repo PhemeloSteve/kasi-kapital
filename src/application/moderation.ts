@@ -26,7 +26,7 @@ export async function suspendBusiness(
 }
 
 export type UnsuspendError =
-  "invalid_input" | "not_allowed" | "not_suspended" | "not_found" | "failed";
+  "invalid_input" | "not_allowed" | "not_suspended" | "closed" | "not_found" | "failed";
 
 /** A super administrator reinstates a suspended business. It goes back to "under review". */
 export async function unsuspendBusiness(
@@ -37,5 +37,35 @@ export async function unsuspendBusiness(
   if (!id.success) return err("invalid_input");
 
   const result = await deps.moderation.unsuspend(id.data);
+  return result.ok ? ok(true as const) : err(result.error);
+}
+
+export type CloseBusinessError =
+  | "invalid_input"
+  | "confirm_required"
+  | "reason_required"
+  | "not_allowed"
+  | "not_found"
+  | "already_closed"
+  | "money_held"
+  | "failed";
+
+/**
+ * A super administrator closes a business for good. It cannot be undone, so the person must have confirmed,
+ * and a reason is recorded. The database re-checks the level and refuses while money is still held.
+ */
+export async function closeBusiness(
+  deps: { moderation: BusinessModeration },
+  input: { businessId: unknown; reason: unknown; confirmed: unknown },
+): Promise<Result<true, CloseBusinessError>> {
+  if (input.confirmed !== true) return err("confirm_required");
+
+  const reasonText = typeof input.reason === "string" ? input.reason.trim() : "";
+  if (reasonText === "") return err("reason_required");
+
+  const parsed = suspendInput.safeParse({ businessId: input.businessId, reason: reasonText });
+  if (!parsed.success) return err("invalid_input");
+
+  const result = await deps.moderation.close(parsed.data);
   return result.ok ? ok(true as const) : err(result.error);
 }

@@ -18,6 +18,7 @@ const businessRow = z.object({
   name: z.string(),
   verification,
   trust_tier: z.number().int().min(0).max(3),
+  closed_at: z.string().nullable(),
   profiles: z.object({ full_name: z.string().nullable() }).nullable(),
   // an aggregate embed: [{ count: 3 }]
   funding_goals: z.array(z.object({ count: z.coerce.number() })),
@@ -48,7 +49,9 @@ export function createAdminDirectory(): AdminDirectory {
       const supabase = await createClient();
       const { data, error } = await supabase
         .from("businesses")
-        .select("id, name, verification, trust_tier, profiles(full_name), funding_goals(count)")
+        .select(
+          "id, name, verification, trust_tier, closed_at, profiles(full_name), funding_goals(count)",
+        )
         .order("created_at", { ascending: false })
         .limit(500);
       if (error) console.error("[admin] list businesses failed", { code: error.code });
@@ -64,6 +67,7 @@ export function createAdminDirectory(): AdminDirectory {
             verification: r.data.verification satisfies VerificationStatus,
             trustTier: r.data.trust_tier as TrustTier,
             goalCount: r.data.funding_goals[0]?.count ?? 0,
+            closedAt: r.data.closed_at,
           },
         ];
       });
@@ -137,6 +141,24 @@ export function createBusinessModeration(): BusinessModeration {
         console.error("[admin] unsuspend failed", { code: error.code });
         if (error.code === "42501") return err("not_allowed");
         if (error.code === "22023") return err("not_suspended");
+        if (error.code === "55000") return err("closed");
+        return err(error.code === "P0002" ? "not_found" : "failed");
+      }
+      return ok(true as const);
+    },
+
+    async close({ businessId, reason }) {
+      const supabase = await createClient();
+      const { error } = await supabase.rpc("close_business", {
+        p_id: businessId,
+        p_reason: reason,
+      });
+      if (error) {
+        console.error("[admin] close failed", { code: error.code });
+        if (error.code === "42501") return err("not_allowed");
+        if (error.code === "22023") return err("reason_required");
+        if (error.code === "55000") return err("already_closed");
+        if (error.code === "55006") return err("money_held");
         return err(error.code === "P0002" ? "not_found" : "failed");
       }
       return ok(true as const);

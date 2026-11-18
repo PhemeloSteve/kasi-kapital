@@ -367,6 +367,8 @@ export type AdminBusinessRow = {
   verification: VerificationStatus;
   trustTier: TrustTier;
   goalCount: number;
+  /** When the business was closed for good, or null. */
+  closedAt: string | null;
 };
 
 export type AdminUserRow = {
@@ -403,7 +405,17 @@ export interface BusinessModeration {
   }): Promise<Result<true, "not_allowed" | "reason_required" | "not_found" | "failed">>;
   unsuspend(
     businessId: string,
-  ): Promise<Result<true, "not_allowed" | "not_suspended" | "not_found" | "failed">>;
+  ): Promise<Result<true, "not_allowed" | "not_suspended" | "closed" | "not_found" | "failed">>;
+  /** Closes a business for good. Refused while money is still held for it. */
+  close(input: {
+    businessId: string;
+    reason: string;
+  }): Promise<
+    Result<
+      true,
+      "not_allowed" | "reason_required" | "not_found" | "already_closed" | "money_held" | "failed"
+    >
+  >;
 }
 
 // ---------- Retention ----------
