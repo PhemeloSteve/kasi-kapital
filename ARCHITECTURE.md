@@ -45,7 +45,8 @@ Dependencies only point inwards. This is enforced by ESLint (`no-restricted-impo
 - **Sessions:** `middleware.ts` refreshes the session cookie and redirects signed-out visitors away from protected pages. Pages then re-check role and consent on the server with `requireUser()`, using `auth.getUser()` (validated with Supabase), never an unverified cookie.
 - **Redirects:** every `?next=` value passes through `safeRedirectPath`, which allows only same-site paths (open-redirect protection).
 - **First admin:** created by an out-of-band SQL update, never through the app.
-- **Known gaps (planned in the hardening step):** MFA enrolment for admins, app-level rate limiting (Supabase's built-in auth limits apply meanwhile), and confirm-email switched back on for production.
+- **Sign-in protection:** a Cloudflare Turnstile check guards sign-in and sign-up and is verified by Supabase itself, so a script that skips the website is stopped too. Setup order is in `docs/hardening/AUTH_PROTECTION.md`.
+- **Known gaps:** confirm-email must be switched back on before real users sign up.
 
 ## Business profiles and funding goals
 
@@ -64,7 +65,7 @@ Dependencies only point inwards. This is enforced by ESLint (`no-restricted-impo
 - **Founders cannot forge approval:** inserted documents are forced to `pending`, review fields are cleared, and a business can only be submitted for review when an ID and a bank statement are uploaded (enforced by a database trigger, not just the screen). Only an administrator can approve, and `review_document` recomputes the trust level in the same transaction.
 - **Trust levels:** 1 = identity approved; 2 = identity plus proof of trading (a bank statement), which makes the business public; 3 = also CIPC-registered. Unregistered businesses can still reach level 2, so informal founders are not shut out.
 - **Everything is audited:** document decisions, status and trust-level changes, and administrator views are written to `audit_log`, which only administrators can read.
-- **Known gaps:** no virus scanning of uploads yet, uploads pass through the server (hence the 4 MB limit; signed upload URLs would lift it), admin accounts do not yet require MFA, and retention or deletion of approved documents when an account closes still needs a process.
+- **Known gaps:** uploads pass through the server (hence the 4 MB limit; signed upload URLs would lift it), and deleting approved documents when an account closes still needs a process (planned).
 
 ## Discovery
 
@@ -92,15 +93,18 @@ Dependencies only point inwards. This is enforced by ESLint (`no-restricted-impo
 - **No second authenticator for an existing one.** Setup is refused when a verified authenticator already exists, and the code is always checked against that existing one, so someone with only a stolen password cannot enroll their own.
 - **Rate limits held in the database.** `rate_limit(action)` counts attempts per person per hour for contributions, uploads and milestone proofs. The limits live in the settings table the browser cannot read, only known action names are accepted, and if the check itself fails the answer is "no".
 - **Unpaid checkouts are capped** at 5 open at a time per supporter, so nobody can tie up a goal's capacity; expired checkouts stop counting.
+- **Uploads are inspected before they are stored**, in one place (`storeDocument`). PDFs that can run scripts, carry attachments or are password protected are refused; photos are rewritten without location and camera data. This is a strict filter for active content and hidden data, not an antivirus. See `docs/hardening/UPLOAD_SCANNING.md`.
+- **A nonce-based Content Security Policy** is built for every request in `src/middleware.ts`, so injected scripts cannot run and nothing inline is trusted. See `docs/adr/0003-nonce-based-content-security-policy.md`.
+- **Rejected documents are deleted on a schedule.** A daily job (`/api/cron/retention`, protected by `CRON_SECRET`) deletes the file first, then the record, 30 days after rejection, and logs each deletion. The database re-checks every document, so an approved or recent one is never deleted. See `docs/hardening/RETENTION.md`.
 - **CI runs the database tests** against PostgreSQL with PostGIS on every pull request.
-- **Known gaps:** uploads are not virus-scanned (needs an external scanner such as ClamAV); the content-security policy still allows inline scripts, which Next.js needs until nonces are added; password-guessing relies on Supabase's built-in sign-in limits (review them under Authentication, Rate Limits); and admin accounts cannot be recovered by another admin.
+- **Known gaps:** uploads are checked for hidden scripts and attachments but not scanned for known malware (that would need an engine such as ClamAV on a server you control); and admin accounts cannot be recovered by another admin.
 
 ## Testing strategy
 
 - **Unit tests (domain):** fast, no mocks needed. Target 90%+ coverage (enforced in `vitest.config.ts`).
 - **Use-case tests (application):** in-memory fakes for the ports; assert that rejected requests never reach the store.
-- **Database policy tests (built, run manually):** the SQL files in `supabase/tests/` run as a non-superuser against a throwaway Postgres, each in its own fresh database (`supabase/tests/run_tests.sh`). They cover signup rules, access control and the step-2 rules above, including attempts to cheat: no self-assigned admin, no self-changed role or KYC status, investors cannot read documents, clients cannot insert contributions, anonymous users see only verified businesses. Running them in CI is planned.
-- **End-to-end (planned):** one happy path (register, verify, fund, release) with Playwright.
+- **Database policy tests (built, run manually):** the SQL files in `supabase/tests/` run as a non-superuser against a throwaway Postgres, each in its own fresh database (`supabase/tests/run_tests.sh`). They cover signup rules, access control and the step-2 rules above, including attempts to cheat: no self-assigned admin, no self-changed role or KYC status, investors cannot read documents, clients cannot insert contributions, anonymous users see only verified businesses. They run in CI on every pull request.
+- **End-to-end:** Playwright drives a real browser against a local Supabase stack (`npm run e2e`, and the E2E workflow in CI). It covers the happy path (verify, fund, prove, pay out), role access control, cookie safety, the content security policy, upload scanning and retention.
 
 ## Adding a feature
 

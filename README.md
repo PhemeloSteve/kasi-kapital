@@ -51,17 +51,17 @@ Inspired by the stokvel tradition of pooling resources, Kasi Kapital brings that
 
 ## Tech stack
 
-| Layer      | Technology                                                              |
-| ---------- | ----------------------------------------------------------------------- |
-| Frontend   | Next.js 15 (App Router), React, TypeScript, PWA                         |
-| UI         | Tailwind CSS, custom green/cream design system                          |
-| Maps       | Leaflet + OpenStreetMap                                                 |
-| Backend    | Supabase (PostgreSQL, Auth, Storage, Row Level Security)                |
-| Geo search | PostGIS                                                                 |
-| Validation | Zod 4                                                                   |
-| Testing    | Vitest unit tests and SQL database checks                               |
-| CI         | GitHub Actions (lint, typecheck, tests, build, audit, CodeQL, DB tests) |
-| Hosting    | Vercel + Supabase                                                       |
+| Layer      | Technology                                                                             |
+| ---------- | -------------------------------------------------------------------------------------- |
+| Frontend   | Next.js 15 (App Router), React, TypeScript, PWA                                        |
+| UI         | Tailwind CSS, custom green/cream design system                                         |
+| Maps       | Leaflet + OpenStreetMap                                                                |
+| Backend    | Supabase (PostgreSQL, Auth, Storage, Row Level Security)                               |
+| Geo search | PostGIS                                                                                |
+| Validation | Zod 4                                                                                  |
+| Testing    | Vitest unit tests, SQL database checks and Playwright browser tests                    |
+| CI         | GitHub Actions (lint, typecheck, tests, build, audit, CodeQL, DB tests, browser tests) |
+| Hosting    | Vercel + Supabase                                                                      |
 
 Payment providers, identity verification and open banking are **mock implementations** behind swappable interfaces. Nothing in this repository moves real money.
 
@@ -85,19 +85,20 @@ cp .env.example .env.local   # fill in your values
 
 ### Environment variables
 
-| Variable                         | Where to find it                                                           | Required            |
-| -------------------------------- | -------------------------------------------------------------------------- | ------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`       | Supabase → Project Settings → API                                          | Yes                 |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY`  | Supabase → Project Settings → API                                          | Yes                 |
-| `NEXT_PUBLIC_APP_URL`            | Your deployed URL or `http://localhost:3000`                               | Yes                 |
-| `SUPABASE_SERVICE_ROLE_KEY`      | Supabase → Project Settings → API                                          | Yes (demo payments) |
-| `PAYMENT_PROVIDER`               | Set to `mock`                                                              | Yes                 |
-| `ALLOW_MOCK_PAYMENTS`            | `true` on demo sites only; production refuses the mock provider without it | Optional            |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare → Turnstile → your widget (site key)                            | Optional            |
-| `ALLOW_DEMO_KYC`                 | Set to `true` for demos only                                               | Optional            |
-| `WEBHOOK_SECRET`                 | A random value of 16+ characters you choose                                | For admin emails    |
-| `RESEND_API_KEY`                 | resend.com → API Keys                                                      | For admin emails    |
-| `ADMIN_NOTIFY_EMAIL`             | The address that receives admin alerts                                     | For admin emails    |
+| Variable                         | Where to find it                                                                                                      | Required               |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`       | Supabase → Project Settings → API                                                                                     | Yes                    |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`  | Supabase → Project Settings → API                                                                                     | Yes                    |
+| `NEXT_PUBLIC_APP_URL`            | Your deployed URL or `http://localhost:3000`                                                                          | Yes                    |
+| `SUPABASE_SERVICE_ROLE_KEY`      | Supabase → Project Settings → API                                                                                     | Yes (demo payments)    |
+| `PAYMENT_PROVIDER`               | Set to `mock`                                                                                                         | Yes                    |
+| `ALLOW_MOCK_PAYMENTS`            | `true` on demo sites only; production refuses the mock provider without it                                            | Optional               |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare → Turnstile → your widget (site key)                                                                       | Optional               |
+| `ALLOW_DEMO_KYC`                 | Set to `true` for demos only                                                                                          | Optional               |
+| `WEBHOOK_SECRET`                 | A random value of 16+ characters you choose                                                                           | For admin emails       |
+| `RESEND_API_KEY`                 | resend.com → API Keys                                                                                                 | For admin emails       |
+| `ADMIN_NOTIFY_EMAIL`             | The address that receives admin alerts                                                                                | For admin emails       |
+| `CRON_SECRET`                    | A random value from `openssl rand -hex 32`. Production only (see [Automatic clean-up](#automatic-clean-up-retention)) | For the daily clean-up |
 
 Never commit `.env.local`. The `SUPABASE_SERVICE_ROLE_KEY` is server-only and must never reach the browser.
 
@@ -130,7 +131,7 @@ Each test file runs on its own throwaway database. Your Supabase project is neve
 
 Playwright drives a real browser through the whole story: a founder is verified by an administrator
 (with two-factor login), raises money through the demo checkout, proves the spending, and the payout
-is released. A second file checks that each role can only reach what it should.
+is released. The other files check that each role can only reach what it should, that sign-in cookies cannot be read by scripts, that the content security policy blocks injected scripts, that dangerous uploads are refused, and that expired rejected documents are deleted. The same tests run in CI on every pull request.
 
 ```bash
 npx supabase start          # local database, applies every migration
@@ -151,7 +152,8 @@ the service key. Test accounts use `@example.test` addresses and a run id, so re
 2. **Authentication → URL Configuration:** set Site URL to `http://localhost:3000`, add `http://localhost:3000/auth/callback` to Redirect URLs.
 3. **Authentication → Multi-Factor:** make sure TOTP is enabled (required for admin accounts).
 4. **Storage:** create private buckets `business-documents` and `identity-documents`.
-5. **First admin:** sign up normally, then in the SQL Editor:
+5. **Sign-in protection:** follow [docs/hardening/AUTH_PROTECTION.md](docs/hardening/AUTH_PROTECTION.md) to switch on the Cloudflare Turnstile check, in the order it describes.
+6. **First admin:** sign up normally, then in the SQL Editor:
 
 ```sql
 update public.profiles set role = 'admin', admin_level = 'super_admin'
@@ -195,6 +197,18 @@ A production server refuses the mock provider unless `ALLOW_MOCK_PAYMENTS=true` 
 
 ---
 
+## Automatic clean-up (retention)
+
+Rejected documents and rejected proof files are deleted automatically **30 days after they were rejected**, so sensitive files are not kept longer than they are needed. A daily Vercel Cron job (`vercel.json`) calls `/api/cron/retention`, which deletes the stored file first, then the record, and writes one audit-log entry per document.
+
+1. Apply the migration: `npx supabase db push --remote`.
+2. In Vercel, add `CRON_SECRET` for **Production** only (`openssl rand -hex 32`), then redeploy. Without it the route refuses every request and nothing is deleted.
+3. Check the **Cron Jobs** tab in Vercel shows `/api/cron/retention`.
+
+Approved documents, money records and the audit log are never touched by this job. Details, the manual test and how to change the period are in [docs/hardening/RETENTION.md](docs/hardening/RETENTION.md).
+
+---
+
 ## Security design
 
 - Row Level Security on every table; the browser only ever uses the anon key.
@@ -206,12 +220,14 @@ A production server refuses the mock provider unless `ALLOW_MOCK_PAYMENTS=true` 
 - The admin webhook checks a shared secret and refuses all calls when none is set.
 - Private documents served through 60-second signed URLs; every admin view is audit-logged.
 - Uploads are checked before they are stored: PDFs that can run scripts, carry attachments or are locked are refused, and photos lose hidden location data.
+- Sign-in and sign-up are protected by a Cloudflare Turnstile check that Supabase verifies, so scripts that skip the website are stopped too ([details](docs/hardening/AUTH_PROTECTION.md)).
+- Sign-in cookies cannot be read by scripts on the page, and a browser test checks it.
 - Rejected documents and proof files are deleted automatically 30 days after rejection, and each deletion is logged.
 - Per-person rate limits on contributions, uploads and proof submissions.
 - Open checkouts capped at 5 per supporter; expired ones stop counting.
 - Strict security headers in `next.config.mjs`, plus a nonce-based Content Security Policy built for every request in `src/middleware.ts`: no inline scripts can run.
 - Locations rounded to ~1 km before storage; never a home address.
-- `npm audit` gate, CycloneDX SBOM, Dependabot, gitleaks and CodeQL in CI.
+- `npm audit` gate on the dependencies that ship to users, CycloneDX SBOM, Dependabot, gitleaks and CodeQL in CI.
 
 ---
 
@@ -220,7 +236,7 @@ A production server refuses the mock provider unless `ALLOW_MOCK_PAYMENTS=true` 
 - Data minimisation: only what is needed for each purpose.
 - Explicit consent at sign-up and before document upload, timestamped by the database.
 - Short-lived signed URLs for private documents; every admin access is logged.
-- Retention and deletion rules for identity and banking documents.
+- Rejected documents are deleted after 30 days ([docs/hardening/RETENTION.md](docs/hardening/RETENTION.md)). Deleting approved documents when a business closes, and a "delete my data" request, are planned and need a decision on how long money records must be kept.
 - A designated Information Officer and published privacy policy are required before launch.
 - Prefer South African hosting regions; cross-border transfers must meet POPIA section 72.
 
@@ -252,7 +268,7 @@ supabase/
   migrations/      # 10 migrations (schema, RLS, functions, triggers)
   tests/           # SQL checks across 8 test files
 .github/
-  workflows/       # CI: quality, security, database
+  workflows/       # CI (quality, security, database), E2E, CodeQL
 ```
 
 | Practice           | How it is applied                                                                 |
@@ -281,9 +297,15 @@ supabase/
 - [x] Database tests in CI
 - [x] Admin levels, audit log page, business suspension, user list and platform stats
 - [x] Admin email notifications through a secured webhook
-- [ ] Production hardening: secure cookies, CSP nonces, login CAPTCHA
-- [ ] Deploy to Vercel
+- [x] Production hardening: secure cookies, nonce-based CSP, sign-in CAPTCHA
+- [x] Upload scanning: dangerous PDFs refused, photos stripped of hidden data
+- [x] End-to-end browser tests in CI
+- [x] Automatic deletion of rejected documents after 30 days
+- [x] Deploy to Vercel
 - [ ] Seed data for the demo
+- [ ] Closing a business and "delete my data" requests
+- [ ] Monitoring, alerts and incident runbooks
+- [ ] POPIA paperwork: Information Officer, PAIA manual, breach procedure
 - [ ] Live KYC, open-banking and payment providers
 - [ ] Supply circles: bulk buying and stock swaps
 - [ ] Licensed equity / revenue-share partnership

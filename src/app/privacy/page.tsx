@@ -45,7 +45,7 @@ export default function PrivacyPage() {
           every time a team member opens one it is recorded. You can delete documents that have not
           been approved. Approved documents are kept while your business is active so decisions can
           be checked, and are deleted when you close your account, unless the law requires us to
-          keep them.
+          keep them. Documents we reject are deleted automatically 30 days after the rejection.
         </p>
         <h2 className="pt-2 text-lg font-semibold text-gray-900">Your rights</h2>
         <p className="text-sm text-gray-700">
