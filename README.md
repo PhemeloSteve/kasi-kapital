@@ -305,7 +305,8 @@ supabase/
 - [ ] Seed data for the demo
 - [x] Closing a business (super administrators), with document retention afterwards
 - [x] "Delete my data": people can delete their own account
-- [ ] Monitoring, alerts and incident runbooks
+- [x] Monitoring basics: health check, policy violation reports, alert emails, runbooks
+- [ ] Dashboards for monitoring set up, error tracking, and a backup plan (see docs/hardening/MONITORING.md)
 - [ ] POPIA paperwork: Information Officer, PAIA manual, breach procedure
 - [ ] Live KYC, open-banking and payment providers
 - [ ] Supply circles: bulk buying and stock swaps

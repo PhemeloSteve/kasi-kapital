@@ -85,3 +85,12 @@ describe("buildCsp everything else", () => {
     expect(a.replace("AAAA", "X")).toBe(b.replace("BBBB", "X"));
   });
 });
+
+describe("buildCsp reporting", () => {
+  it("sends violation reports to our own endpoint", () => {
+    const parts = buildCsp(live)
+      .split(";")
+      .map((d) => d.trim());
+    expect(parts).toContain("report-uri /api/csp-report");
+  });
+});
