@@ -42,7 +42,7 @@ export default async function AdminBusinessesPage({
       adminLevel={user.adminLevel}
       name={user.fullName}
       title="Businesses"
-      subtitle="Every business on the platform. Suspending hides a business from supporters and is recorded in the audit log."
+      subtitle="Every business on the platform. Suspending hides a business from supporters. Closing a business is permanent. Both are recorded in the audit log."
     >
       {notice && notices[notice] && (
         <p role="status" className="mb-4 rounded-xl bg-green-50 p-3 text-sm text-green-900">

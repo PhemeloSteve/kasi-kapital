@@ -265,8 +265,8 @@ src/
   app/             # Next.js App Router pages and server actions
   components/      # UI components
 supabase/
-  migrations/      # 11 migrations (schema, RLS, functions, triggers)
-  tests/           # SQL checks across 9 test files
+  migrations/      # 12 migrations (schema, RLS, functions, triggers)
+  tests/           # SQL checks across 10 test files
 .github/
   workflows/       # CI (quality, security, database), E2E, CodeQL
 ```
@@ -304,7 +304,7 @@ supabase/
 - [x] Deploy to Vercel
 - [ ] Seed data for the demo
 - [x] Closing a business (super administrators), with document retention afterwards
-- [ ] "Delete my data" requests
+- [x] "Delete my data": people can delete their own account
 - [ ] Monitoring, alerts and incident runbooks
 - [ ] POPIA paperwork: Information Officer, PAIA manual, breach procedure
 - [ ] Live KYC, open-banking and payment providers

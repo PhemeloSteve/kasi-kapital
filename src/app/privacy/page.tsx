@@ -48,6 +48,14 @@ export default function PrivacyPage() {
           the law requires us to keep them. Documents we reject are deleted automatically 30 days
           after the rejection.
         </p>
+        <h2 className="pt-2 text-lg font-semibold text-gray-900">Deleting your account</h2>
+        <p className="text-sm text-gray-700">
+          You can delete your account yourself from the account menu. We remove your name and
+          profile details straight away, and your business profile if you have one. Records of money
+          that moved through Kasi Kapital are kept, without your name, because the law requires us
+          to keep them for several years. If money is still held for you, the account can be deleted
+          once it has been paid out.
+        </p>
         <h2 className="pt-2 text-lg font-semibold text-gray-900">Your rights</h2>
         <p className="text-sm text-gray-700">
           Under POPIA you may ask to see, correct or delete your information, or complain to the

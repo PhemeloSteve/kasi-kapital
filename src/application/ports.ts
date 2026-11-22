@@ -72,6 +72,13 @@ export interface AuthGateway {
   acceptConsent(userId: string): Promise<Result<true, "failed">>;
 }
 
+export interface AccountEraser {
+  /** Whether money is still held for the signed-in person or their business. */
+  moneyInPlay(): Promise<boolean>;
+  /** Erases the account, signs the person out everywhere and clears their sign-in details. */
+  erase(userId: string): Promise<Result<true, "money_held" | "not_allowed" | "failed">>;
+}
+
 export type BusinessData = {
   name: string;
   category: BusinessCategory;

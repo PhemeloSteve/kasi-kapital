@@ -14,6 +14,7 @@ const protectedPrefixes = [
   "/contributions",
   "/mock-checkout",
   "/verify-identity",
+  "/account",
 ];
 
 export async function middleware(request: NextRequest) {

@@ -1,4 +1,4 @@
-import { ChevronDown, LogOut, ShieldCheck } from "lucide-react";
+import { ChevronDown, LogOut, ShieldCheck, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { logOutAction } from "@/app/(auth)/actions";
 import { roleLabels, type UserRole } from "@/domain/roles";
@@ -37,6 +37,15 @@ export function UserMenu({ name, role }: { name: string | null; role: UserRole }
           >
             <ShieldCheck aria-hidden="true" className="h-4 w-4 text-brand" />
             Verify identity
+          </Link>
+        )}
+        {role !== "admin" && (
+          <Link
+            href="/account/delete"
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-gray-50"
+          >
+            <Trash2 aria-hidden="true" className="h-4 w-4 text-gray-500" />
+            Delete my account
           </Link>
         )}
         <form action={logOutAction}>
