@@ -79,3 +79,8 @@ that is a later task. Confirm the period with your Information Officer before la
 ```sql
 update public.platform_settings set int_value = 24 where key = 'retention_closed_document_months';
 ```
+
+## When someone deletes their account
+
+See [DELETE_MY_DATA.md](DELETE_MY_DATA.md). A founder's business is closed at that moment, so the
+closed-business rules above apply from then on.

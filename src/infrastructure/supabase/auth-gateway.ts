@@ -15,10 +15,10 @@ async function loadCurrentUser(
 ): Promise<CurrentUser | null> {
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, full_name, popia_consent_at, admin_level")
+    .select("role, full_name, popia_consent_at, admin_level, deleted_at")
     .eq("id", userId)
     .maybeSingle();
-  if (!profile || !isUserRole(profile.role)) return null;
+  if (!profile || profile.deleted_at !== null || !isUserRole(profile.role)) return null;
   return {
     userId,
     role: profile.role,
