@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { purgeExpiredDocuments } from "@/application/retention";
 import { extractWebhookSecret, isValidWebhookSecret } from "@/app/_lib/webhook-auth";
+import { describeRetentionAlert } from "@/domain/admin-notifications";
+import { sendAdminEmail } from "@/infrastructure/email/admin-email";
 import { createRetentionStore } from "@/infrastructure/supabase/retention-store";
 
 export const dynamic = "force-dynamic";
@@ -20,10 +22,14 @@ export async function GET(request: NextRequest) {
   try {
     const summary = await purgeExpiredDocuments({ retention: createRetentionStore() });
     console.warn("[retention] purge finished", summary);
+    const alert = describeRetentionAlert({ ok: true, ...summary });
+    if (alert) await sendAdminEmail(alert);
     return NextResponse.json({ ok: true, ...summary });
   } catch (error) {
     // The message names only the step and an error code, never a document.
     console.error("[retention] purge failed", { message: (error as Error).message });
+    const alert = describeRetentionAlert({ ok: false });
+    if (alert) await sendAdminEmail(alert);
     return NextResponse.json({ ok: false }, { status: 500 });
   }
 }
